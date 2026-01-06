@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>综合媒体导航 - VisionKit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-react@latest/dist/css/arco.min.css">
+    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco.min.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco-icon.min.js"></script>
+    <style>
+        body { background-color: #f2f3f5; }
+        .media-card-img {
+            height: 100px;
+            background-size: cover;
+            background-position: center;
+            background-color: #e5e6eb;
+        }
+        .player-container {
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 */
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .player-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .nav-list-container {
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #c9cdd4; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        
+        .list-item-active {
+            background: #e8f3ff !important;
+            border-radius: 4px;
+        }
+        .list-item-hover:hover {
+            background: #f7f8fa !important;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { Layout, Menu, Card, Grid, Typography, Button, Message, PageHeader, Empty, List, Avatar, Input, Spin, Alert, Tag, Space, Drawer } = arco;
+        const { Sider, Content } = Layout;
+        const { Title, Text } = Typography;
+        const { Row, Col } = Grid;
+        const { IconPlayCircle, IconCopy, IconMenu, IconVideoCamera, IconWifi, IconPlus, IconImport, IconThunderbolt, IconMenuUnfold } = arcoicon;
+
+        function App() {
+            const [selectedKey, setSelectedKey] = React.useState('cctv');
+            const [currentMedia, setCurrentMedia] = React.useState(null);
+            const [visibleMenu, setVisibleMenu] = React.useState(false);
+            const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+            React.useEffect(() => {
+                const handleResize = () => setIsMobile(window.innerWidth < 768);
+                window.addEventListener('resize', handleResize);
+                return () => window.removeEventListener('resize', handleResize);
+            }, []);
+            const [mediaData, setMediaData] = React.useState({
+                cctv: [],
+                youtube: [],
+                bilibili: [],
+                live_youtube: []
+            });
+            const [loading, setLoading] = React.useState(true);
+            const [error, setError] = React.useState(null);
+            const [customYoutubeUrl, setCustomYoutubeUrl] = React.useState('');
+
+            // Load JSON Data
+            React.useEffect(() => {
+                const fetchData = async () => {
+                    try {
+                        // Attempt to fetch local JSON file with timestamp to prevent caching
+                        const response = await fetch(`Veplayer_live_list_m3u8.json?t=${new Date().getTime()}`);
+                        if (!response.ok) {
+                            throw new Error('无法读取配置文件 (需本地服务器环境)');
+                        }
+                        const json = await response.json();
+                        
+                        // Parse Data
+                        const parsedData = {
+                            cctv: (json.profile || []).map((item, idx) => ({
+                                id: `cctv-${idx}`,
+                                title: item.name,
+                                type: 'stream',
+                                tagType: item.type, // '直播' or '视频'
+                                streamUrl: item.add,
+                                thumbnail: item.png
+                            })),
+                            youtube: (json.dashboard || []).map((item, idx) => {
+                                const idMatch = item.add.match(/embed\/([^?]+)/);
+                                return {
+                                    id: idMatch ? idMatch[1] : `yt-${idx}`,
+                                    title: item.name,
+                                    type: 'youtube',
+                                    tagType: item.type,
+                                    thumbnail: item.png
+                                };
+                            }),
+                            bilibili: (json.settings || []).map((item, idx) => ({
+                                id: `bili-${idx}`,
+                                title: item.name,
+                                type: 'bilibili',
+                                tagType: item.type,
+                                url: item.add, // Direct iframe src
+                                thumbnail: item.png
+                            })),
+                            live_youtube: [] // Custom manual input
+                        };
+
+                        setMediaData(parsedData);
+                        setLoading(false);
+                    } catch (err) {
+                        console.error(err);
+                        setError(err.message);
+                        setLoading(false);
+                    }
+                };
+
+                fetchData();
+            }, []);
+
+            // Set default media when category changes
+            React.useEffect(() => {
+                if (selectedKey === 'live_youtube') {
+                    setCurrentMedia(null);
+                    return;
+                }
+                
+                const items = mediaData[selectedKey] || [];
+                if (items.length > 0) {
+                    setCurrentMedia(items[0]);
+                } else {
+                    setCurrentMedia(null);
+                }
+            }, [selectedKey, mediaData]);
+
+            const handlePlay = (item) => {
+                setCurrentMedia(item);
+            };
+
+            const handleCustomPlay = () => {
+                if (!customYoutubeUrl) {
+                    Message.warning('请输入 YouTube 视频 ID 或 URL');
+                    return;
+                }
+                
+                // Extract ID
+                let id = customYoutubeUrl;
+                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                const match = customYoutubeUrl.match(regExp);
+                if (match && match[2].length === 11) {
+                    id = match[2];
+                }
+
+                setCurrentMedia({
+                    id: id,
+                    title: 'Live YouTube 播放',
+                    type: 'youtube'
+                });
+            };
+
+            const handleCopy = (item, e) => {
+                e.stopPropagation(); 
+                let code = '';
+                if (item.type === 'youtube') {
+                    code = `<iframe width="560" height="315" src="https://www.youtube.com/embed/${item.id}" frameborder="0" allowfullscreen></iframe>`;
+                } else if (item.type === 'bilibili') {
+                    code = `<iframe src="${item.url}" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>`;
+                } else if (item.type === 'stream') {
+                    const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+                    code = `<iframe src="${baseUrl}/ve_no_controls.html?src=${encodeURIComponent(item.streamUrl)}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
+                }
+
+                if (code) {
+                    navigator.clipboard.writeText(code).then(() => {
+                        Message.success('分享代码已复制');
+                    });
+                }
+            };
+
+            // File Upload Fallback
+            const handleFileUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const json = JSON.parse(event.target.result);
+                        // Same parsing logic
+                        const parsedData = {
+                            cctv: (json.profile || []).map((item, idx) => ({
+                                id: `cctv-${idx}`,
+                                title: item.name,
+                                type: 'stream',
+                                tagType: item.type,
+                                streamUrl: item.add,
+                                thumbnail: item.png
+                            })),
+                            youtube: (json.dashboard || []).map((item, idx) => {
+                                const idMatch = item.add.match(/embed\/([^?]+)/);
+                                return {
+                                    id: idMatch ? idMatch[1] : `yt-${idx}`,
+                                    title: item.name,
+                                    type: 'youtube',
+                                    tagType: item.type,
+                                    thumbnail: item.png
+                                };
+                            }),
+                            bilibili: (json.settings || []).map((item, idx) => ({
+                                id: `bili-${idx}`,
+                                title: item.name,
+                                type: 'bilibili',
+                                tagType: item.type,
+                                url: item.add,
+                                thumbnail: item.png
+                            })),
+                            live_youtube: []
+                        };
+                        setMediaData(parsedData);
+                        setError(null);
+                        setLoading(false);
+                        Message.success('配置加载成功');
+                    } catch (err) {
+                        Message.error('JSON 解析失败');
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            const renderPlayer = () => {
+                if (!currentMedia) {
+                    return (
+                        <div className="player-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                            <div style={{ textAlign: 'center' }}>
+                                <IconVideoCamera style={{ fontSize: 48, marginBottom: 16, opacity: 0.5 }} />
+                                <div>请选择左侧菜单或右侧列表播放视频</div>
+                            </div>
+                        </div>
+                    );
+                }
+
+                let src = '';
+                if (currentMedia.type === 'youtube') {
+                    src = `https://www.youtube.com/embed/${currentMedia.id}?autoplay=1`;
+                } else if (currentMedia.type === 'bilibili') {
+                    src = currentMedia.url; // Bilibili direct url
+                } else if (currentMedia.type === 'stream') {
+                    src = `ve_no_controls.html?src=${encodeURIComponent(currentMedia.streamUrl)}&autoplay=1`;
+                }
+
+                return (
+                    <div className="player-container">
+                        <iframe 
+                            src={src} 
+                            frameBorder="0" 
+                            allowFullScreen 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        ></iframe>
+                    </div>
+                );
+            };
+
+            const renderList = () => {
+                if (selectedKey === 'live_youtube') {
+                    return (
+                        <div style={{ padding: 16 }}>
+                            <Title heading={6}>手动播放 YouTube</Title>
+                            <Input.Search
+                                searchButton="播放"
+                                placeholder="输入 YouTube 视频 ID 或 URL"
+                                value={customYoutubeUrl}
+                                onChange={setCustomYoutubeUrl}
+                                onSearch={handleCustomPlay}
+                                style={{ width: '100%', marginBottom: 16 }}
+                            />
+                            <div style={{ color: '#86909c', fontSize: 12 }}>
+                                支持格式：
+                                <br/>- 视频 ID: dQw4w9WgXcQ
+                                <br/>- 完整 URL: https://www.youtube.com/watch?v=...
+                            </div>
+                        </div>
+                    );
+                }
+
+                const items = mediaData[selectedKey] || [];
+                
+                if (loading) return <div style={{ padding: 20, textAlign: 'center' }}><Spin /></div>;
+                
+                if (error && items.length === 0) {
+                    return (
+                        <div style={{ padding: 16 }}>
+                            <Alert type="warning" content={error} style={{ marginBottom: 16 }} />
+                            <div style={{ textAlign: 'center' }}>
+                                <input
+                                    type="file"
+                                    accept=".json"
+                                    id="json-upload"
+                                    style={{ display: 'none' }}
+                                    onChange={handleFileUpload}
+                                />
+                                <Button type="primary" onClick={() => document.getElementById('json-upload').click()}>
+                                    <IconImport /> 手动导入 JSON 文件
+                                </Button>
+                            </div>
+                        </div>
+                    );
+                }
+
+                if (items.length === 0) return <Empty description="暂无内容" />;
+
+                return (
+                    <div className="nav-list-container">
+                        <List
+                            dataSource={items}
+                            render={(item, index) => (
+                                <List.Item 
+                                    key={item.id} 
+                                    className="list-item-hover"
+                                    style={{ 
+                                        cursor: 'pointer', 
+                                        background: currentMedia?.id === item.id ? '#e8f3ff' : 'transparent',
+                                        transition: 'all 0.2s',
+                                        borderBottom: '1px solid #f2f3f5'
+                                    }}
+                                    onClick={() => handlePlay(item)}
+                                >
+                                    <List.Item.Meta
+                                        avatar={
+                                            <div 
+                                                style={{ 
+                                                    width: 120, 
+                                                    height: 68, 
+                                                    backgroundImage: `url(${item.thumbnail})`,
+                                                    backgroundSize: 'cover',
+                                                    backgroundPosition: 'center',
+                                                    borderRadius: 4,
+                                                    backgroundColor: '#f2f3f5',
+                                                    position: 'relative',
+                                                    border: '1px solid #e5e6eb'
+                                                }} 
+                                            >
+                                                {currentMedia?.id === item.id && (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: 0, left: 0, right: 0, bottom: 0,
+                                                        background: 'rgba(22,93,255,0.6)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        borderRadius: 4
+                                                    }}>
+                                                        <IconPlayCircle style={{ color: '#fff', fontSize: 24 }} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        }
+                                        title={
+                                            <div style={{ marginBottom: 8 }}>
+                                                <Text style={{ 
+                                                    fontWeight: currentMedia?.id === item.id ? 'bold' : 'normal',
+                                                    color: currentMedia?.id === item.id ? '#165dff' : '#1d2129',
+                                                    fontSize: 14
+                                                }} ellipsis={{ showTooltip: true }}>{item.title}</Text>
+                                            </div>
+                                        }
+                                        description={
+                                            <Space size={4}>
+                                                <Tag size="small" color="arcoblue">
+                                                    {item.type === 'stream' ? 'CCTV' : item.type.toUpperCase()}
+                                                </Tag>
+                                                {item.tagType && (
+                                                    <Tag color={item.tagType === '直播' ? 'red' : 'green'} size="small">
+                                                        {item.tagType}
+                                                    </Tag>
+                                                )}
+                                            </Space>
+                                        }
+                                    />
+                                </List.Item>
+                            )}
+                        />
+                    </div>
+                );
+            };
+
+            const MenuContent = () => (
+                <Menu
+                    style={{ width: '100%', height: '100%' }}
+                    selectedKeys={[selectedKey]}
+                    onClickMenuItem={key => {
+                        setSelectedKey(key);
+                        setVisibleMenu(false);
+                    }}
+                >
+                    <Menu.Item key="cctv"><IconMenu /> 央视 (CCTV)</Menu.Item>
+                    <Menu.Item key="youtube"><IconVideoCamera /> YouTube</Menu.Item>
+                    <Menu.Item key="bilibili"><IconPlayCircle /> Bilibili</Menu.Item>
+                    <Menu.Item key="live_youtube"><IconWifi /> Live YouTube</Menu.Item>
+                </Menu>
+            );
+
+            return (
+                <Layout style={{ height: isMobile ? 'auto' : '100vh', minHeight: '100vh', overflow: isMobile ? 'auto' : 'hidden' }}>
+                    <PageHeader
+                        style={{ background: '#fff', borderBottom: '1px solid #e5e6eb', flexShrink: 0, position: 'sticky', top: 0, zIndex: 10 }}
+                        title="综合媒体导航"
+                        subTitle={isMobile ? null : "多平台资源聚合"}
+                        backIcon
+                        onBack={() => window.location.href = 'index.html'}
+                        extra={
+                            isMobile && (
+                                <Button icon={<IconMenuUnfold />} onClick={() => setVisibleMenu(true)} />
+                            )
+                        }
+                    />
+                    
+                    {/* Mobile Drawer Menu */}
+                    {isMobile && (
+                        <Drawer
+                            visible={visibleMenu}
+                            onOk={() => setVisibleMenu(false)}
+                            onCancel={() => setVisibleMenu(false)}
+                            placement="left"
+                            width={240}
+                            title="频道导航"
+                            footer={null}
+                        >
+                            <MenuContent />
+                        </Drawer>
+                    )}
+
+                    <Layout style={{ flex: 1, overflow: 'hidden', flexDirection: isMobile ? 'column' : 'row' }}>
+                        {!isMobile && (
+                            <Sider style={{ background: '#fff', borderRight: '1px solid #e5e6eb' }} width={200}>
+                                <MenuContent />
+                            </Sider>
+                        )}
+                        <Content style={{ padding: isMobile ? '12px' : '24px', overflow: isMobile ? 'visible' : 'hidden', background: '#f7f8fa' }}>
+                            <Row gutter={[24, 24]} style={{ height: isMobile ? 'auto' : '100%' }}>
+                                <Col xs={24} md={17} style={{ height: isMobile ? 'auto' : '100%', overflowY: isMobile ? 'visible' : 'auto', marginBottom: isMobile ? 16 : 0 }}>
+                                    <div style={{ background: '#fff', padding: isMobile ? 12 : 24, borderRadius: 8, minHeight: isMobile ? 'auto' : '100%', display: 'flex', flexDirection: 'column' }}>
+                                        <Title heading={5} style={{ marginTop: 0, marginBottom: 16 }}>
+                                            {currentMedia?.title || '未选择视频'}
+                                        </Title>
+                                        <div style={{ flex: isMobile ? 'none' : 1 }}>
+                                            {renderPlayer()}
+                                        </div>
+                                    </div>
+                                </Col>
+                                <Col xs={24} md={7} style={{ height: isMobile ? 'auto' : '100%' }}>
+                                    <div style={{ background: '#fff', borderRadius: 8, height: isMobile ? 500 : '100%', display: 'flex', flexDirection: 'column' }}>
+                                        <div style={{ padding: '16px 20px', borderBottom: '1px solid #f2f3f5' }}>
+                                            <Title heading={6} style={{ margin: 0 }}>播放列表</Title>
+                                        </div>
+                                        {renderList()}
+                                    </div>
+                                </Col>
+                            </Row>
+                        </Content>
+                    </Layout>
+                </Layout>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

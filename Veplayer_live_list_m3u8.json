@@ -1,0 +1,74 @@
+{
+  "profile": [
+    {
+      "add": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv1hd/600/index.m3u8?msisdn=202601061402554eea275dc3794dac92d7abbff7334594&mdspid=&spid=699004&netType=0&sid=2201057821&pid=2028597139&timestamp=20260106140255&Channel_ID=0116_2600037000-99000-200300220100002&ProgramID=608807420&ParentNodeID=-99&assertID=2201057821&client_ip=218.28.233.106&SecurityKey=20260106140255&promotionId=&mvid=2201057821&mcid=500020&playurlVersion=WX-A1-8.12.2-RELEASE&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=2406341bc3d76de6202e0a9532c39b63&sv=10004&ct=android",
+      "png": "https://p3.img.cctvpic.com/photoAlbum/page/performance/img/2022/3/18/1647586299749_488.png",
+      "name": "cctv1-综合,中国中央电视台综合性频道。",
+      "type": "直播"
+    },
+    {
+      "add": "http://hlsztemgsplive.miguvideo.com:8080/envivo_x/2018/SD/cctv13/1000/index.m3u8?msisdn=20260106160303d9f27a5c5f3b4cc7a59b7775aa518b13&mdspid=&spid=699004&netType=0&sid=2202208864&pid=2028597139&timestamp=20260106160303&Channel_ID=0116_2600037000-99000-200300220100002&ProgramID=608807423&ParentNodeID=-99&assertID=2202208864&client_ip=218.28.233.106&SecurityKey=20260106160303&promotionId=&mvid=2202208864&mcid=500020&playurlVersion=WX-A1-8.12.2-RELEASE&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=9dd553b3b6776991e6557b4058934d56&sv=10004&ct=android",
+      "png": "https://p2.img.cctvpic.com/photoAlbum/page/performance/img/2022/3/30/1648609564977_591.png",
+      "name": "cctv13-新闻,中国中央电视台新闻频道。",
+      "type": "直播"
+    }
+  ],
+  "dashboard": [
+    {
+      "add": "https://www.youtube.com/embed/TrcG1V1tlLM",
+      "png": "https://i.ytimg.com/vi/TrcG1V1tlLM/hq720.jpg",
+      "name": "在中国著名的太行山驾车-河南林州大峡谷景区-4K HDR",
+      "type": "视频"
+    },
+    {
+      "add": "https://www.youtube.com/embed/fN9uYWCjQaw",
+      "png": "https://i.ytimg.com/vi/fN9uYWCjQaw/hq720.jpg",
+      "name": "【鳳凰衛視#24小時直播間 】",
+      "type": "直播"
+    },
+    {
+      "add": "https://www.youtube.com/embed/yQgn-dFvU7M",
+      "png": "https://i.ytimg.com/vi/yQgn-dFvU7M/hq720.jpg",
+      "name": "Best of Switzerland | 8K 60p HDR - Jungfrau Region, Rhine Falls, Lucerne & Matterhorn",
+      "type": "视频"
+    },
+    {
+      "add": "https://www.youtube.com/embed/NHVunVsj3V4",
+      "png": "https://i.ytimg.com/vi/NHVunVsj3V4/hq720.jpg",
+      "name": "California | 8K HDR – San Francisco, San Diego, Yosemite & More",
+      "type": "视频"
+    },
+    {
+      "add": "https://www.youtube.com/embed/bjyghVbVeIM",
+      "png": "https://i.ytimg.com/vi/bjyghVbVeIM/hq720.jpg",
+      "name": "한강 뷰 수영장에서 예쁜 비키니 입고 놀다 왔어요!😳",
+      "type": "视频"
+    },
+    {
+      "add": "https://www.youtube.com/embed/jd2fobvR58s",
+      "png": "https://i.ytimg.com/vi/jd2fobvR58s/hq720.jpg",
+      "name": "VISUALDON - 4 Hour Synthwave Mix - 4K Ultra HD",
+      "type": "视频"
+    },
+    {
+      "add": "https://www.youtube.com/embed/LHkkM_xMl3w",
+      "png": "https://i.ytimg.com/vi/LHkkM_xMl3w/hq720.jpg",
+      "name": "Late night rain walk in old Japanese town // 4K HDR",
+      "type": "视频"
+    }
+  ],
+  "settings": [
+    {
+      "add": "https://www.bilibili.com/blackboard/live/live-activity-player.html?cid=3291055&quality=0",
+      "png": "https://i0.hdslb.com/bfs/live/new_room_cover/e9363e4e6db1e495c54721635a65aa5aa70edb80.jpg",
+      "name": "学习工作｜北京朝阳大悦城实时街景",
+      "type": "直播"
+    },
+    {
+      "add": "https://www.bilibili.com/blackboard/live/live-activity-player.html?cid=23046729&quality=0",
+      "png": "https://i0.hdslb.com/bfs/live/new_room_cover/1c7b96f09d78597ce0cafb9980722081e3cdddb9.jpg",
+      "name": "南迦巴瓦实时慢直播，云游西藏林芝索松村",
+      "type": "直播"
+    }
+  ]
+}

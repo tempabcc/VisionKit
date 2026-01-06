@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 配置编辑器 - VisionKit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-react@latest/dist/css/arco.min.css">
+    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco.min.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco-icon.min.js"></script>
+    <style>
+        body { background-color: #f2f3f5; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { Layout, Card, Form, Input, Button, Grid, Typography, Message, PageHeader, Tabs, Table, Modal, Space, Select, Upload } = arco;
+        const { Header, Content } = Layout;
+        const { Title } = Typography;
+        const { Row, Col } = Grid;
+        const { IconSave, IconPlus, IconDelete, IconEdit, IconImport, IconDownload } = arcoicon;
+        const TabPane = Tabs.TabPane;
+        const FormItem = Form.Item;
+
+        function App() {
+            const [data, setData] = React.useState({
+                profile: [],
+                dashboard: [],
+                settings: []
+            });
+            const [activeTab, setActiveTab] = React.useState('profile');
+            const [visible, setVisible] = React.useState(false);
+            const [editingItem, setEditingItem] = React.useState(null);
+            const [form] = Form.useForm();
+
+            // Load initial data from local file if possible, or start empty
+            React.useEffect(() => {
+                fetch(`Veplayer_live_list_m3u8.json?t=${new Date().getTime()}`)
+                    .then(res => res.json())
+                    .then(json => setData(json))
+                    .catch(() => {
+                        Message.info('未检测到本地配置，请先导入或新建');
+                    });
+            }, []);
+
+            const handleImport = (file) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        setData(json);
+                        Message.success('导入成功');
+                    } catch (err) {
+                        Message.error('JSON 格式错误');
+                    }
+                };
+                reader.readAsText(file);
+                return false;
+            };
+
+            const handleSaveFile = async () => {
+                const jsonStr = JSON.stringify(data, null, 2);
+                
+                // Try File System Access API first
+                if (window.showSaveFilePicker) {
+                    try {
+                        const opts = {
+                            suggestedName: 'Veplayer_live_list_m3u8.json',
+                            types: [{
+                                description: 'JSON File',
+                                accept: { 'application/json': ['.json'] },
+                            }],
+                        };
+                        const handle = await window.showSaveFilePicker(opts);
+                        const writable = await handle.createWritable();
+                        await writable.write(jsonStr);
+                        await writable.close();
+                        Message.success('文件已保存成功！');
+                        return;
+                    } catch (err) {
+                        if (err.name === 'AbortError') return;
+                        console.error(err);
+                        // Fallback to download if error
+                    }
+                }
+
+                // Fallback to legacy download
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Veplayer_live_list_m3u8.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                Modal.info({
+                    title: '保存提示',
+                    content: '由于浏览器安全限制，文件已作为下载项保存。请务必使用下载的文件替换项目根目录下的 "Veplayer_live_list_m3u8.json" 文件，否则修改不会生效。'
+                });
+            };
+
+            const handleConfirmSave = () => {
+                Modal.confirm({
+                    title: '确认保存修改？',
+                    content: '这将生成新的配置文件。请确认是否继续？',
+                    onOk: handleSaveFile,
+                    okText: '确认保存',
+                    cancelText: '取消'
+                });
+            };
+
+            const columns = [
+                {
+                    title: '名称 (Name)',
+                    dataIndex: 'name',
+                    width: 200,
+                },
+                {
+                    title: '地址 (Add/URL)',
+                    dataIndex: 'add',
+                    ellipsis: true,
+                },
+                {
+                    title: '类型 (Type)',
+                    dataIndex: 'type',
+                    width: 100,
+                },
+                {
+                    title: '操作',
+                    width: 160,
+                    render: (_, item, index) => (
+                        <Space>
+                            <Button size="small" type="text" icon={<IconEdit />} onClick={() => handleEdit(index, item)}>
+                                编辑
+                            </Button>
+                            <Button size="small" type="text" status="danger" icon={<IconDelete />} onClick={() => handleDelete(index)}>
+                                删除
+                            </Button>
+                        </Space>
+                    ),
+                },
+            ];
+
+            const handleEdit = (index, item) => {
+                setEditingItem({ ...item, _index: index });
+                form.setFieldsValue(item);
+                setVisible(true);
+            };
+
+            const handleAdd = () => {
+                setEditingItem(null);
+                form.resetFields();
+                setVisible(true);
+            };
+
+            const handleDelete = (index) => {
+                const list = [...data[activeTab]];
+                list.splice(index, 1);
+                setData({ ...data, [activeTab]: list });
+                Message.success('已删除');
+            };
+
+            const handleSave = () => {
+                form.validate().then((values) => {
+                    const list = [...data[activeTab]];
+                    if (editingItem && editingItem._index !== undefined) {
+                        list[editingItem._index] = values;
+                    } else {
+                        list.push(values);
+                    }
+                    // Update state properly
+                    const newData = { ...data, [activeTab]: list };
+                    setData(newData);
+                    
+                    // Update the visible form and close modal
+                    setVisible(false);
+                    Message.success('保存成功，请记得点击“导出并下载”');
+                });
+            };
+
+            const getTabTitle = (key) => {
+                const map = {
+                    profile: '央视直播 (Profile)',
+                    dashboard: 'YouTube (Dashboard)',
+                    settings: 'Bilibili (Settings)'
+                };
+                return map[key] || key;
+            };
+
+            return (
+                <Layout style={{ minHeight: '100vh' }}>
+                    <PageHeader
+                        style={{ background: '#fff', borderBottom: '1px solid #e5e6eb' }}
+                        title="JSON 配置编辑器"
+                        subTitle="可视化修改 Veplayer_live_list_m3u8.json"
+                        backIcon
+                        onBack={() => window.close()} // Or navigate to index
+                        extra={
+                            <Space>
+                                <Upload showUploadList={false} beforeUpload={handleImport}>
+                                    <Button icon={<IconImport />}>导入 JSON</Button>
+                                </Upload>
+                                <Button type="primary" status="success" icon={<IconSave />} onClick={handleConfirmSave}>
+                                    确认修改并保存
+                                </Button>
+                            </Space>
+                        }
+                    />
+                    <Content style={{ padding: '24px' }}>
+                        <Card bordered={false} style={{ minHeight: 600 }}>
+                            <Tabs activeTab={activeTab} onChange={setActiveTab} extra={
+                                <Button type="primary" size="small" icon={<IconPlus />} onClick={handleAdd}>
+                                    新增条目
+                                </Button>
+                            }>
+                                {['profile', 'dashboard', 'settings'].map(key => (
+                                    <TabPane key={key} title={getTabTitle(key)}>
+                                        <Table
+                                            data={data[key]}
+                                            columns={columns}
+                                            rowKey={(r, i) => i}
+                                            pagination={false}
+                                            scroll={{ x: 800 }}
+                                        />
+                                    </TabPane>
+                                ))}
+                            </Tabs>
+                        </Card>
+
+                        <Modal
+                            title={editingItem ? '编辑条目' : '新增条目'}
+                            visible={visible}
+                            onOk={handleSave}
+                            onCancel={() => setVisible(false)}
+                            mountOnEnter={false}
+                        >
+                            <Form form={form} layout="vertical">
+                                <FormItem label="名称 (Name)" field="name" rules={[{ required: true }]}>
+                                    <Input placeholder="请输入显示名称" />
+                                </FormItem>
+                                <FormItem label="资源地址 (Add)" field="add" rules={[{ required: true }]}>
+                                    <Input placeholder="输入 m3u8 / YouTube embed / Bilibili URL" />
+                                </FormItem>
+                                <FormItem label="缩略图 (PNG)" field="png">
+                                    <Input placeholder="图片 URL" />
+                                </FormItem>
+                                <FormItem label="类型 (Type)" field="type">
+                                    <Select options={['直播', '视频']} placeholder="选择类型" />
+                                </FormItem>
+                            </Form>
+                        </Modal>
+                    </Content>
+                </Layout>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

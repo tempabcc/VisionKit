@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VePlayer 极简模式</title>
+    <link rel="stylesheet" href="https://lf-unpkg.volccdn.com/obj/vcloudfe/sdk/@volcengine/veplayer/1.10.0/index.min.css" />
+    <script src="https://lf-unpkg.volccdn.com/obj/vcloudfe/sdk/@volcengine/veplayer/1.10.0/index.min.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        #player { width: 100%; height: 100%; }
+        .error-msg { color: #fff; text-align: center; margin-top: 20%; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="player"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const src = params.get('src');
+            const isLive = params.has('zhibo');
+            
+            if (!src) {
+                document.getElementById('player').innerHTML = '<div class="error-msg">请在 URL 中提供 src 参数 (例如: ?src=...&zhibo)</div>';
+                return;
+            }
+
+            try {
+                const player = new VePlayer({
+                    id: 'player',
+                    width: '100%',
+                    height: '100%',
+                    url: src,
+                    isLive: isLive,
+                    controls: false,
+                    autoplay: true,
+                    mute: true,
+                    loop: true,
+                    vodLogOpts: {
+                        line_app_id: 1, // 00000001
+                        tag: '普通视频'
+                    }
+                });
+            } catch (e) {
+                console.error('VePlayer init error:', e);
+                document.getElementById('player').innerHTML = '<div class="error-msg">播放器初始化失败，请检查控制台</div>';
+            }
+        });
+    </script>
+</body>
+</html>
