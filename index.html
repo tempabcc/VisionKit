@@ -13,19 +13,44 @@
         body { background-color: #f2f3f5; }
         .tool-card { transition: all 0.3s; cursor: pointer; }
         .tool-card:hover { transform: translateY(-4px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        /* 移动端适配 */
+        @media screen and (max-width: 768px) {
+            .arco-layout-header {
+                padding: 0 16px !important;
+                flex-direction: column;
+                height: auto !important;
+                padding-bottom: 16px !important;
+            }
+            .header-logo-area {
+                width: 100%;
+                justify-content: flex-start;
+                margin-bottom: 12px;
+                padding-top: 16px;
+            }
+            .header-search-area {
+                width: 100% !important;
+            }
+            .arco-layout-content {
+                padding: 16px !important;
+            }
+            .welcome-section {
+                margin-bottom: 24px !important;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="app">
         <a-layout style="min-height: 100vh;">
-            <a-layout-header style="padding: 0 24px; background: #fff; border-bottom: 1px solid #e5e6eb; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10;">
-                <div style="display: flex; align-items: center;">
+            <a-layout-header class="arco-layout-header" style="padding: 0 24px; background: #fff; border-bottom: 1px solid #e5e6eb; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10;">
+                <div class="header-logo-area" style="display: flex; align-items: center;">
                     <div style="width: 32px; height: 32px; background: rgb(22, 93, 255); border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
                         <icon-settings style="color: #fff; font-size: 20px;"></icon-settings>
                     </div>
                     <a-typography-title :heading="5" style="margin: 0;">VisionKit 工具箱</a-typography-title>
                 </div>
-                <div style="width: 300px;">
+                <div class="header-search-area" style="width: 300px;">
                     <a-input-search 
                         placeholder="搜索工具..." 
                         allow-clear
@@ -33,9 +58,9 @@
                     />
                 </div>
             </a-layout-header>
-            <a-layout-content style="padding: 32px 24px;">
+            <a-layout-content class="arco-layout-content" style="padding: 32px 24px;">
                 <div style="max-width: 1200px; margin: 0 auto;">
-                    <div style="margin-bottom: 32px; text-align: center;">
+                    <div class="welcome-section" style="margin-bottom: 32px; text-align: center;">
                         <a-typography-title :heading="2">欢迎使用 VisionKit</a-typography-title>
                         <a-typography-paragraph type="secondary" style="max-width: 600px; margin: 0 auto;">
                             这是一个多功能前端集成工具箱，提供视频嵌入、文档预览和媒体资源管理等实用功能。

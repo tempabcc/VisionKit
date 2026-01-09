@@ -107,6 +107,57 @@
             transform: scale(1.1);
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
         }
+
+        /* 列表项响应式适配 */
+        .nav-item-avatar {
+            width: 120px;
+            height: 68px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 4px;
+            background-color: #ffffff;
+            position: relative;
+            border: 1px solid var(--color-border-2);
+            flex-shrink: 0;
+            margin-right: 12px;
+            overflow: hidden;
+        }
+        
+        .nav-item-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 68px;
+            padding: 2px 0;
+        }
+
+        /* 平板/窄屏适配 (1024px左右) */
+        @media screen and (max-width: 1200px) {
+            .nav-item-avatar {
+                width: 100px;
+                height: 56px;
+                margin-right: 8px;
+            }
+            .nav-item-info {
+                min-height: 56px;
+            }
+            .item-title {
+                font-size: 13px !important;
+                margin-bottom: 4px;
+                line-height: 1.3 !important;
+            }
+            /* 让 Tag 换行 */
+            .nav-item-info .arco-space {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            .nav-item-info .arco-space-item {
+                margin-right: 4px !important;
+                margin-bottom: 2px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -164,7 +215,7 @@
                 
                 <a-layout-content :style="{ padding: isMobile ? '12px' : '24px', overflow: isMobile ? 'visible' : 'hidden', background: '#f7f8fa' }">
                     <a-row :gutter="[24, 24]" :style="{ height: isMobile ? 'auto' : '100%' }">
-                        <a-col :xs="24" :md="17" :style="{ height: isMobile ? 'auto' : '100%', overflowY: isMobile ? 'visible' : 'auto', marginBottom: isMobile ? '16px' : 0 }">
+                        <a-col :xs="24" :md="16" :lg="17" :style="{ height: isMobile ? 'auto' : '100%', overflowY: isMobile ? 'visible' : 'auto', marginBottom: isMobile ? '16px' : 0 }">
                             <div :style="{ background: '#fff', padding: isMobile ? '12px' : '24px', borderRadius: '8px', minHeight: isMobile ? 'auto' : '100%', display: 'flex', flexDirection: 'column' }">
                                 <a-typography-title :heading="5" style="margin-top: 0; margin-bottom: 16px;">
                                     {{ currentMedia?.title || '未选择视频' }}
@@ -187,7 +238,7 @@
                                 </div>
                             </div>
                         </a-col>
-                        <a-col :xs="24" :md="7" :style="{ height: isMobile ? 'auto' : '100%' }">
+                        <a-col :xs="24" :md="8" :lg="7" :style="{ height: isMobile ? 'auto' : '100%' }">
                             <div :style="{ background: '#fff', borderRadius: '8px', height: isMobile ? '500px' : '100%', display: 'flex', flexDirection: 'column' }">
                                 <div style="padding: 16px 20px; border-bottom: 1px solid #f2f3f5;">
                                     <a-typography-title :heading="6" style="margin: 0;">播放列表</a-typography-title>
@@ -219,19 +270,9 @@
                                     >
                                         <!-- Avatar -->
                                         <div 
+                                            class="nav-item-avatar"
                                             :style="{ 
-                                                width: '120px', 
-                                                height: '68px', 
-                                                backgroundImage: `url(${item.thumbnail})`,
-                                                backgroundSize: 'cover',
-                                                backgroundPosition: 'center',
-                                                borderRadius: '4px',
-                                                backgroundColor: '#ffffff',
-                                                position: 'relative',
-                                                border: '1px solid var(--color-border-2)',
-                                                flexShrink: 0,
-                                                marginRight: '12px',
-                                                overflow: 'hidden'
+                                                backgroundImage: `url(${item.thumbnail})`
                                             }" 
                                         >
                                             <div class="thumb-overlay">
@@ -242,11 +283,11 @@
                                         </div>
 
                                         <!-- Info -->
-                                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; height: 68px; padding-top: 2px; padding-bottom: 2px;">
+                                        <div class="nav-item-info">
                                             <div class="item-title" style="font-size: 14px; line-height: 1.4; color: var(--color-text-1);">
                                                 {{ item.title }}
                                             </div>
-                                            <a-space :size="6">
+                                            <a-space :size="6" wrap>
                                                 <a-tag v-if="item.type === 'stream'" size="small" color="arcoblue" bordered>
                                                     <template #icon><icon-live-broadcast /></template>
                                                     CCTV

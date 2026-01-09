@@ -22,6 +22,70 @@
             font-size: 13px;
             font-family: monospace;
         }
+        
+        /* 移动端适配 */
+        @media screen and (max-width: 768px) {
+            .arco-layout-content {
+                padding: 16px !important;
+            }
+            
+            /* PageHeader 移动端终极适配 */
+            .arco-page-header {
+                padding: 12px 16px !important;
+            }
+            
+            /* 强制 main 容器变为 flex 且换行 */
+            .arco-page-header-header .arco-page-header-main {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                align-items: center !important;
+                width: 100% !important;
+            }
+            
+            /* 返回按钮：防压缩，定间距 */
+            .arco-page-header-back-btn {
+                margin-right: 8px !important;
+                flex-shrink: 0 !important;
+                display: inline-flex !important;
+                color: var(--color-text-1);
+            }
+            
+            /* 标题：占满剩余空间，单行省略 */
+            .arco-page-header-title {
+                flex: 1 1 auto !important;
+                width: 0 !important;
+                min-width: 0 !important;
+                margin-right: 0 !important;
+                margin-bottom: 0 !important;
+                font-size: 16px !important;
+                font-weight: 500;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+            
+            /* 隐藏分割线 */
+            .arco-page-header-divider {
+                display: none !important;
+            }
+            
+            /* 副标题：独占一行，自动换行 */
+            .arco-page-header-subtitle {
+                display: block !important;
+                width: 100% !important;
+                margin-left: 0 !important;
+                margin-top: 6px !important;
+                font-size: 13px !important;
+                color: var(--color-text-3);
+                line-height: 1.5 !important;
+                white-space: normal !important;
+            }
+            
+            /* 移除 wrapper 可能的干扰 */
+            .arco-page-header-wrapper {
+                padding-left: 0 !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -33,7 +97,7 @@
                 subtitle="安全、快速的域名解析查询"
                 @back="goBack"
             ></a-page-header>
-            <a-layout-content style="padding: 24px;">
+            <a-layout-content class="arco-layout-content" style="padding: 24px;">
                 <div style="max-width: 1000px; margin: 0 auto;">
                     <a-card :bordered="false" style="margin-bottom: 24px;">
                         <a-form
