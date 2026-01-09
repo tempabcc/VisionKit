@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VisionKit - 多功能前端集成工具箱</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-react@latest/dist/css/arco.min.css">
-    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco.min.js"></script>
-    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco-icon.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-vue@latest/dist/arco-vue.min.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-vue@latest/dist/arco-vue-icon.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-vue@latest/dist/arco.css">
     <style>
         body { background-color: #f2f3f5; }
         .tool-card { transition: all 0.3s; cursor: pointer; }
@@ -18,176 +16,193 @@
     </style>
 </head>
 <body>
-    <div id="root"></div>
-
-    <script type="text/babel" data-cfasync="false">
-        const { Layout, Menu, Card, Typography, Grid, Icon, Space, Avatar, Input, Empty, Button, Tag } = arco;
-        const { Header, Content, Footer } = Layout;
-        const { Title, Paragraph, Text } = Typography;
-        const { Row, Col } = Grid;
-        const { IconSettings, IconVideoCamera, IconFile, IconPlayCircle, IconCode, IconMenu, IconSearch, IconPlus, IconCompass, IconCodeBlock } = arcoicon;
-
-        // ==========================================
-        // 工具模块配置区 (在此处修改顺序或添加新模块)
-        // ==========================================
-        const initialTools = [
-            {
-                id: 'iframe_gen',
-                title: "通用 Iframe 生成器",
-                desc: "生成高度可定制的 Iframe 嵌入代码，支持全屏、沙箱等高级属性。",
-                icon: <IconCodeBlock style={{ fontSize: 24, color: '#ff7d00' }} />,
-                link: "iframe_generator.html",
-                tag: '新功能'
-            },
-            {
-                id: 'media_nav',
-                title: "综合媒体导航",
-                desc: "整合多平台媒体资源，支持一键播放。",
-                icon: <IconMenu style={{ fontSize: 24, color: '#165dff' }} />,
-                link: "media_navigation.html",
-                tag: '推荐'
-            },
-            {
-                id: 'dns_tool',
-                title: "DoH DNS 查询工具",
-                desc: "支持 Cloudflare/AliDNS/DNSPod 多源查询。",
-                icon: <IconCompass style={{ fontSize: 24, color: '#00b96b' }} />,
-                link: "dns_tool.html",
-                tag: '新功能'
-            },
-            {
-                id: 've_gen',
-                title: "VePlayer 嵌入生成器",
-                desc: "生成 VePlayer 初始化代码，支持自定义配置。",
-                icon: <IconCode style={{ fontSize: 24, color: '#722ed1' }} />,
-                link: "ve_generator.html"
-            },
-            {
-                id: 'youtube_tool',
-                title: "YouTube 嵌入生成器",
-                desc: "生成带有高级配置的 YouTube iframe 代码。",
-                icon: <IconVideoCamera style={{ fontSize: 24, color: '#f00' }} />,
-                link: "youtube_tool.html"
-            },
-            {
-                id: 'office_view',
-                title: "Office 在线预览助手",
-                desc: "快速预览 Word, Excel, PPT 文档。",
-                icon: <IconFile style={{ fontSize: 24, color: '#106eb7' }} />,
-                link: "office_viewer.html"
-            },
-            {
-                id: 've_no_ctrl',
-                title: "VePlayer 极简模式",
-                desc: "无控制栏的极简视频播放器。",
-                icon: <IconPlayCircle style={{ fontSize: 24, color: '#00b42a' }} />,
-                link: "ve_no_controls.html?src="
-            },
-            {
-                id: 've_std',
-                title: "VePlayer 标准模式",
-                desc: "全功能视频播放器，深色背景。",
-                icon: <IconPlayCircle style={{ fontSize: 24, color: '#ff7d00' }} />,
-                link: "ve_standard.html?src="
-            }
-        ];
-
-        function App() {
-            const [searchText, setSearchText] = React.useState('');
-            const [tools, setTools] = React.useState(initialTools);
-
-            const filteredTools = tools.filter(tool => 
-                tool.title.toLowerCase().includes(searchText.toLowerCase()) || 
-                tool.desc.toLowerCase().includes(searchText.toLowerCase())
-            );
-
-            return (
-                <Layout style={{ minHeight: '100vh' }}>
-                    <Header style={{ padding: '0 24px', background: '#fff', borderBottom: '1px solid #e5e6eb', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <div style={{ width: 32, height: 32, background: 'var(--color-primary-6)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                                <IconSettings style={{ color: '#fff', fontSize: 20 }} />
-                            </div>
-                            <Title heading={5} style={{ margin: 0 }}>VisionKit 工具箱</Title>
-                        </div>
-                        <div style={{ width: 300 }}>
-                            <Input.Search 
-                                placeholder="搜索工具..." 
-                                allowClear
-                                onChange={setSearchText}
-                            />
-                        </div>
-                    </Header>
-                    <Content style={{ padding: '32px 24px' }}>
-                        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-                            <div style={{ marginBottom: 32, textAlign: 'center' }}>
-                                <Title heading={2}>欢迎使用 VisionKit</Title>
-                                <Paragraph type="secondary" style={{ maxWidth: 600, margin: '0 auto' }}>
-                                    这是一个多功能前端集成工具箱，提供视频嵌入、文档预览和媒体资源管理等实用功能。
-                                    所有工具均为独立文件，无需服务器环境即可运行。
-                                </Paragraph>
-                            </div>
+    <div id="app">
+        <a-layout style="min-height: 100vh;">
+            <a-layout-header style="padding: 0 24px; background: #fff; border-bottom: 1px solid #e5e6eb; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10;">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 32px; height: 32px; background: rgb(22, 93, 255); border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                        <icon-settings style="color: #fff; font-size: 20px;"></icon-settings>
+                    </div>
+                    <a-typography-title :heading="5" style="margin: 0;">VisionKit 工具箱</a-typography-title>
+                </div>
+                <div style="width: 300px;">
+                    <a-input-search 
+                        placeholder="搜索工具..." 
+                        allow-clear
+                        v-model="searchText"
+                    />
+                </div>
+            </a-layout-header>
+            <a-layout-content style="padding: 32px 24px;">
+                <div style="max-width: 1200px; margin: 0 auto;">
+                    <div style="margin-bottom: 32px; text-align: center;">
+                        <a-typography-title :heading="2">欢迎使用 VisionKit</a-typography-title>
+                        <a-typography-paragraph type="secondary" style="max-width: 600px; margin: 0 auto;">
+                            这是一个多功能前端集成工具箱，提供视频嵌入、文档预览和媒体资源管理等实用功能。
+                            所有工具均为独立文件，无需服务器环境即可运行。
+                        </a-typography-paragraph>
+                    </div>
+                    
+                    <template v-if="filteredTools.length > 0">
+                        <a-row :gutter="[24, 24]">
+                            <a-col v-for="tool in filteredTools" :key="tool.id" :xs="24" :sm="12" :md="8" :lg="8" :span="8">
+                                <a :href="tool.link" style="text-decoration: none;">
+                                    <a-card 
+                                        class="tool-card"
+                                        hoverable
+                                        style="height: 100%; border-radius: 8px; border: 1px solid #e5e6eb;"
+                                        :body-style="{ padding: '20px' }"
+                                    >
+                                        <a-space direction="vertical" :size="16" style="width: 100%;">
+                                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                                <div style="width: 44px; height: 44px; border-radius: 50%; background: #f2f3f5; display: flex; align-items: center; justify-content: center;">
+                                                    <component :is="tool.icon" :style="tool.iconStyle"></component>
+                                                </div>
+                                                <a-tag v-if="tool.tag" color="arcoblue" size="small">{{ tool.tag }}</a-tag>
+                                            </div>
+                                            <div>
+                                                <a-typography-title :heading="6" style="margin: 0 0 8px 0; font-size: 16px;">{{ tool.title }}</a-typography-title>
+                                                <a-typography-paragraph type="secondary" style="margin-bottom: 0; min-height: 42px; font-size: 13px; line-height: 1.5;">
+                                                    {{ tool.desc }}
+                                                </a-typography-paragraph>
+                                            </div>
+                                        </a-space>
+                                    </a-card>
+                                </a>
+                            </a-col>
                             
-                            {filteredTools.length > 0 ? (
-                                <Row gutter={[24, 24]}>
-                                    {filteredTools.map((tool, index) => (
-                                        <Col span={8} key={tool.id} xs={24} sm={12} md={8} lg={8}>
-                                            <a href={tool.link} style={{ textDecoration: 'none' }}>
-                                                <Card 
-                                                    className="tool-card"
-                                                    hoverable
-                                                    style={{ height: '100%', borderRadius: 8, border: '1px solid #e5e6eb' }}
-                                                    bodyStyle={{ padding: 20 }}
-                                                >
-                                                    <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                            <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#f2f3f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                                {tool.icon}
-                                                            </div>
-                                                            {tool.tag && <Tag color="arcoblue" size="small">{tool.tag}</Tag>}
-                                                        </div>
-                                                        <div>
-                                                            <Title heading={6} style={{ margin: '0 0 8px 0', fontSize: 16 }}>{tool.title}</Title>
-                                                            <Paragraph type="secondary" style={{ marginBottom: 0, minHeight: 42, fontSize: 13, lineHeight: 1.5 }}>
-                                                                {tool.desc}
-                                                            </Paragraph>
-                                                        </div>
-                                                    </Space>
-                                                </Card>
-                                            </a>
-                                        </Col>
-                                    ))}
-                                    
-                                    {/* 引导添加模块卡片 */}
-                                    <Col span={8} xs={24} sm={12} md={8} lg={8}>
-                                        <Card 
-                                            className="tool-card"
-                                            hoverable
-                                            style={{ height: '100%', borderRadius: 8, border: '1px dashed #c9cdd4', background: '#fcfcfd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                            bodyStyle={{ padding: 20, width: '100%', textAlign: 'center' }}
-                                            onClick={() => window.open('https://github.com/tempabcc/VisionKit/issues', '_blank')} 
-                                        >
-                                            <Space direction="vertical" size={12}>
-                                                <IconPlus style={{ fontSize: 32, color: '#86909c' }} />
-                                                <Text type="secondary">期待更多功能？</Text>
-                                            </Space>
-                                        </Card>
-                                    </Col>
-                                </Row>
-                            ) : (
-                                <Empty description="未找到相关工具" />
-                            )}
-                        </div>
-                    </Content>
-                    <Footer style={{ padding: '24px', textAlign: 'center', color: '#86909c' }}>
-                        VisionKit @ 2025 - Designed with Arco Design & Tailwind CSS
-                    </Footer>
-                </Layout>
-            );
-        }
+                            <!-- 引导添加模块卡片 -->
+                            <a-col :xs="24" :sm="12" :md="8" :lg="8" :span="8">
+                                <a-card 
+                                    class="tool-card"
+                                    hoverable
+                                    style="height: 100%; border-radius: 8px; border: 1px dashed #c9cdd4; background: #fcfcfd; display: flex; align-items: center; justify-content: center;"
+                                    :body-style="{ padding: '20px', width: '100%', textAlign: 'center' }"
+                                    @click="openIssue"
+                                >
+                                    <a-space direction="vertical" :size="12">
+                                        <icon-plus style="font-size: 32px; color: #86909c;"></icon-plus>
+                                        <a-typography-text type="secondary">期待更多功能？</a-typography-text>
+                                    </a-space>
+                                </a-card>
+                            </a-col>
+                        </a-row>
+                    </template>
+                    <a-empty v-else description="未找到相关工具" />
+                </div>
+            </a-layout-content>
+            <a-layout-footer style="padding: 24px; text-align: center; color: #86909c;">
+                VisionKit @ 2025 - Designed with Arco Design & Tailwind CSS
+            </a-layout-footer>
+        </a-layout>
+    </div>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+    <script>
+        const { createApp } = Vue;
+
+        const App = {
+            data() {
+                return {
+                    searchText: '',
+                    initialTools: [
+                        {
+                            id: 'iframe_gen',
+                            title: "通用 Iframe 生成器",
+                            desc: "生成高度可定制的 Iframe 嵌入代码，支持全屏、沙箱等高级属性。",
+                            icon: 'icon-code-block',
+                            iconStyle: { fontSize: '24px', color: '#ff7d00' },
+                            link: "iframe_generator.html",
+                            tag: '新功能'
+                        },
+                        {
+                            id: 'media_nav',
+                            title: "综合媒体导航",
+                            desc: "整合多平台媒体资源，支持一键播放。",
+                            icon: 'icon-menu',
+                            iconStyle: { fontSize: '24px', color: '#165dff' },
+                            link: "media_navigation.html",
+                            tag: '推荐'
+                        },
+                        {
+                            id: 'dns_tool',
+                            title: "DoH DNS 查询工具",
+                            desc: "支持 Cloudflare/AliDNS/DNSPod 多源查询。",
+                            icon: 'icon-compass',
+                            iconStyle: { fontSize: '24px', color: '#00b96b' },
+                            link: "dns_tool.html",
+                            tag: '新功能'
+                        },
+                        {
+                            id: 've_gen',
+                            title: "VePlayer 嵌入生成器",
+                            desc: "生成 VePlayer 初始化代码，支持自定义配置。",
+                            icon: 'icon-code',
+                            iconStyle: { fontSize: '24px', color: '#722ed1' },
+                            link: "ve_generator.html"
+                        },
+                        {
+                            id: 'youtube_tool',
+                            title: "YouTube 嵌入生成器",
+                            desc: "生成带有高级配置的 YouTube iframe 代码。",
+                            icon: 'icon-video-camera',
+                            iconStyle: { fontSize: '24px', color: '#f00' },
+                            link: "youtube_tool.html"
+                        },
+                        {
+                            id: 'office_view',
+                            title: "Office 在线预览助手",
+                            desc: "快速预览 Word, Excel, PPT 文档。",
+                            icon: 'icon-file',
+                            iconStyle: { fontSize: '24px', color: '#106eb7' },
+                            link: "office_viewer.html"
+                        },
+                        {
+                            id: 've_no_ctrl',
+                            title: "VePlayer 极简模式",
+                            desc: "无控制栏的极简视频播放器。",
+                            icon: 'icon-play-circle',
+                            iconStyle: { fontSize: '24px', color: '#00b42a' },
+                            link: "ve_no_controls.html?src="
+                        },
+                        {
+                            id: 've_std',
+                            title: "VePlayer 标准模式",
+                            desc: "全功能视频播放器，深色背景。",
+                            icon: 'icon-play-circle',
+                            iconStyle: { fontSize: '24px', color: '#ff7d00' },
+                            link: "ve_standard.html?src="
+                        },
+                        {
+                            id: 'json_edit',
+                            title: "配置数据编辑器",
+                            desc: "可视化编辑媒体导航列表数据。",
+                            icon: 'icon-settings',
+                            iconStyle: { fontSize: '24px', color: '#86909c' },
+                            link: "json_editor.html",
+                            tag: '工具'
+                        }
+                    ]
+                };
+            },
+            computed: {
+                filteredTools() {
+                    return this.initialTools.filter(tool => 
+                        tool.title.toLowerCase().includes(this.searchText.toLowerCase()) || 
+                        tool.desc.toLowerCase().includes(this.searchText.toLowerCase())
+                    );
+                }
+            },
+            methods: {
+                openIssue() {
+                    window.open('https://github.com/tempabcc/VisionKit/issues', '_blank');
+                }
+            }
+        };
+
+        const app = createApp(App);
+        app.use(ArcoVue);
+        app.use(ArcoVueIcon);
+        app.mount('#app');
     </script>
 </body>
 </html>

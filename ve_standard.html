@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VePlayer 标准模式 - VisionKit</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-react@latest/dist/css/arco.min.css">
-    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco.min.js"></script>
-    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco-icon.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-vue@latest/dist/arco-vue.min.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-vue@latest/dist/arco-vue-icon.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-vue@latest/dist/arco.css">
     <link rel="stylesheet" href="https://lf-unpkg.volccdn.com/obj/vcloudfe/sdk/@volcengine/veplayer/1.10.0/index.min.css" />
     <script src="https://lf-unpkg.volccdn.com/obj/vcloudfe/sdk/@volcengine/veplayer/1.10.0/index.min.js"></script>
     <style>
@@ -27,24 +25,51 @@
     </style>
 </head>
 <body arco-theme="dark">
-    <div id="root"></div>
+    <div id="app">
+        <a-layout style="min-height: 100vh; background: #17171a;">
+            <a-page-header
+                style="background: #232324; border-bottom: 1px solid #333;"
+                title="VePlayer 标准模式"
+                subtitle="沉浸式暗色体验"
+                @back="goBack"
+            >
+                <template #back-icon>
+                    <icon-left style="color: #fff;" />
+                </template>
+            </a-page-header>
+            <a-layout-content style="padding: 48px 24px; display: flex; justify-content: center; align-items: flex-start;">
+                <div v-if="hasSource" class="player-wrapper">
+                    <div id="veplayer-container"></div>
+                </div>
+                <div v-else style="margin-top: 100px;">
+                    <a-empty>
+                        <template #description>
+                            <span style="color: rgba(255,255,255,0.7);">请在 URL 中指定 src 参数</span>
+                        </template>
+                    </a-empty>
+                </div>
+            </a-layout-content>
+        </a-layout>
+    </div>
 
-    <script type="text/babel" data-cfasync="false">
-        const { Layout, Button, PageHeader, Message, Empty } = arco;
-        const { Content } = Layout;
-        const { IconLeft } = arcoicon;
+    <script>
+        const { createApp } = Vue;
+        const { Message } = ArcoVue;
 
-        function App() {
-            const playerRef = React.useRef(null);
-            const [hasSource, setHasSource] = React.useState(false);
-
-            React.useEffect(() => {
+        const App = {
+            data() {
+                return {
+                    hasSource: false,
+                    playerInstance: null
+                };
+            },
+            mounted() {
                 const params = new URLSearchParams(window.location.search);
                 const src = params.get('src');
                 const isLive = params.has('zhibo');
 
                 if (src) {
-                    setHasSource(true);
+                    this.hasSource = true;
                     // Slight delay to ensure DOM is ready for VePlayer
                     setTimeout(() => {
                         try {
@@ -65,42 +90,25 @@
                                     tag: '普通视频'
                                 }
                             });
+                            this.playerInstance = window.playerInstance;
                         } catch (e) {
                             console.error(e);
                             Message.error('播放器初始化失败');
                         }
                     }, 100);
                 }
-            }, []);
+            },
+            methods: {
+                goBack() {
+                    window.location.href = 'index.html';
+                }
+            }
+        };
 
-            return (
-                <Layout style={{ minHeight: '100vh', background: '#17171a' }}>
-                    <PageHeader
-                        style={{ background: '#232324', borderBottom: '1px solid #333' }}
-                        title="VePlayer 标准模式"
-                        subTitle="沉浸式暗色体验"
-                        backIcon={<IconLeft style={{ color: '#fff' }} />}
-                        onBack={() => window.location.href = 'index.html'}
-                    />
-                    <Content style={{ padding: '48px 24px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
-                        {hasSource ? (
-                            <div className="player-wrapper">
-                                <div id="veplayer-container"></div>
-                            </div>
-                        ) : (
-                            <div style={{ marginTop: 100 }}>
-                                <Empty 
-                                    description={<span style={{ color: 'rgba(255,255,255,0.7)' }}>请在 URL 中指定 src 参数</span>} 
-                                />
-                            </div>
-                        )}
-                    </Content>
-                </Layout>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        const app = createApp(App);
+        app.use(ArcoVue);
+        app.use(ArcoVueIcon);
+        app.mount('#app');
     </script>
 </body>
 </html>

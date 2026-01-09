@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DoH DNS 查询工具 - VisionKit</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-react@latest/dist/css/arco.min.css">
-    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco.min.js"></script>
-    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco-icon.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-vue@latest/dist/arco-vue.min.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-vue@latest/dist/arco-vue-icon.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-vue@latest/dist/arco.css">
     <style>
         body { background-color: #f2f3f5; }
         .result-card {
@@ -27,234 +25,239 @@
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="app">
+        <a-layout style="min-height: 100vh;">
+            <a-page-header
+                style="background: #fff; border-bottom: 1px solid #e5e6eb;"
+                title="DNS over HTTPS 工具"
+                subtitle="安全、快速的域名解析查询"
+                @back="goBack"
+            ></a-page-header>
+            <a-layout-content style="padding: 24px;">
+                <div style="max-width: 1000px; margin: 0 auto;">
+                    <a-card :bordered="false" style="margin-bottom: 24px;">
+                        <a-form
+                            :model="form"
+                            layout="vertical"
+                            @submit="handleSearch"
+                        >
+                            <a-row :gutter="24">
+                                <a-col :xs="24" :sm="24" :md="8">
+                                    <a-form-item label="DoH 服务商" field="provider" :rules="[{ required: true }]">
+                                        <a-select v-model="form.provider">
+                                            <a-option v-for="(p, key) in providers" :key="key" :value="key">
+                                                {{ p.name }}
+                                            </a-option>
+                                        </a-select>
+                                    </a-form-item>
+                                </a-col>
+                                <a-col :xs="24" :sm="24" :md="10">
+                                    <a-form-item label="域名 (Domain)" field="domain" :rules="[{ required: true, message: '请输入域名' }]">
+                                        <a-input v-model="form.domain" placeholder="example.com" allow-clear />
+                                    </a-form-item>
+                                </a-col>
+                                <a-col :xs="16" :sm="16" :md="6">
+                                    <a-form-item label="记录类型" field="type" :rules="[{ required: true }]">
+                                        <a-select v-model="form.type">
+                                            <a-option v-for="t in recordTypes" :key="t" :value="t">{{ t }}</a-option>
+                                        </a-select>
+                                    </a-form-item>
+                                </a-col>
+                            </a-row>
+                            <a-form-item style="margin-bottom: 0;">
+                                <a-button type="primary" html-type="submit" long :loading="loading">
+                                    <template #icon><icon-search /></template>
+                                    立即查询
+                                </a-button>
+                            </a-form-item>
+                        </a-form>
+                    </a-card>
 
-    <script type="text/babel" data-cfasync="false">
-        const { Layout, Card, Form, Input, Select, Button, Grid, Typography, Message, PageHeader, Table, Tag, Space, Descriptions, Spin, Empty } = arco;
-        const { Content } = Layout;
-        const { Title } = Typography;
-        const { Row, Col } = Grid;
-        const { IconSearch, IconCompass, IconCode } = arcoicon;
+                    <div v-if="loading" style="text-align: center; padding: 40px;">
+                        <a-spin tip="正在向 DoH 服务器查询..." />
+                    </div>
 
-        const providers = {
-            cloudflare: {
-                url: 'https://cloudflare-dns.com/dns-query',
-                name: 'Cloudflare (1.1.1.1)',
-                color: 'blue'
+                    <div v-if="result">
+                        <a-space direction="vertical" size="large" style="width: 100%;">
+                            <a-card title="查询结果" :bordered="false">
+                                <a-descriptions
+                                    :column="1"
+                                    :data="[
+                                        { label: '状态', value: rcodeMap[result.Status] || result.Status, isTag: true },
+                                        { label: '响应时间', value: new Date().toLocaleTimeString() },
+                                        { label: 'TC (Truncated)', value: result.TC ? '是' : '否' },
+                                        { label: 'RD (Recursion Desired)', value: result.RD ? '是' : '否' },
+                                        { label: 'RA (Recursion Available)', value: result.RA ? '是' : '否' },
+                                    ]"
+                                    style="margin-bottom: 24px;"
+                                    :label-style="{ width: '140px' }"
+                                >
+                                    <template #value="{ data }">
+                                        <a-tag v-if="data.isTag" :color="result.Status === 0 ? 'green' : 'red'">
+                                            {{ data.value }}
+                                        </a-tag>
+                                        <span v-else>{{ data.value }}</span>
+                                    </template>
+                                </a-descriptions>
+                                
+                                <a-typography-title :heading="6">Answer Records</a-typography-title>
+                                <template v-if="result.Answer && result.Answer.length > 0">
+                                    <a-table
+                                        :columns="columns"
+                                        :data="result.Answer"
+                                        :pagination="false"
+                                        :scroll="{ x: 600 }"
+                                    >
+                                        <template #name="{ record }">
+                                            <span style="word-break: break-all;">{{ record.name }}</span>
+                                        </template>
+                                        <template #type="{ record }">
+                                            <a-tag color="arcoblue">{{ typeMap[record.type] || record.type }}</a-tag>
+                                        </template>
+                                        <template #data="{ record }">
+                                            <span style="word-break: break-all; font-family: monospace;">{{ record.data }}</span>
+                                        </template>
+                                    </a-table>
+                                </template>
+                                <a-empty v-else description="未找到记录 (No Answer)" />
+                            </a-card>
+
+                            <a-card title="原始 JSON 响应" :bordered="false">
+                                <pre>{{ JSON.stringify(rawJson, null, 2) }}</pre>
+                            </a-card>
+                        </a-space>
+                    </div>
+                </div>
+            </a-layout-content>
+        </a-layout>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        const { Message } = ArcoVue;
+
+        const App = {
+            data() {
+                return {
+                    form: {
+                        provider: 'cloudflare',
+                        domain: '',
+                        type: 'A'
+                    },
+                    loading: false,
+                    result: null,
+                    rawJson: null,
+                    providers: {
+                        cloudflare: {
+                            url: 'https://cloudflare-dns.com/dns-query',
+                            name: 'Cloudflare (1.1.1.1)',
+                            color: 'blue'
+                        },
+                        alidns: {
+                            url: 'https://dns.alidns.com/resolve',
+                            name: '阿里云 AliDNS',
+                            color: 'orange'
+                        },
+                        tencent: {
+                            url: 'https://doh.pub/dns-query',
+                            name: '腾讯云 DNSPod',
+                            color: 'green'
+                        }
+                    },
+                    recordTypes: ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'PTR', 'SOA', 'SRV'],
+                    rcodeMap: {
+                        0: 'NOERROR',
+                        1: 'FORMERR',
+                        2: 'SERVFAIL',
+                        3: 'NXDOMAIN',
+                        4: 'NOTIMP',
+                        5: 'REFUSED'
+                    },
+                    typeMap: {
+                        1: 'A',
+                        2: 'NS',
+                        5: 'CNAME',
+                        6: 'SOA',
+                        12: 'PTR',
+                        15: 'MX',
+                        16: 'TXT',
+                        28: 'AAAA',
+                        33: 'SRV'
+                    },
+                    columns: [
+                        {
+                            title: '记录名 (Name)',
+                            dataIndex: 'name',
+                            slotName: 'name'
+                        },
+                        {
+                            title: '类型 (Type)',
+                            dataIndex: 'type',
+                            width: 100,
+                            slotName: 'type'
+                        },
+                        {
+                            title: 'TTL',
+                            dataIndex: 'TTL',
+                            width: 80,
+                        },
+                        {
+                            title: '记录值 (Data)',
+                            dataIndex: 'data',
+                            slotName: 'data'
+                        }
+                    ]
+                };
             },
-            alidns: {
-                url: 'https://dns.alidns.com/resolve',
-                name: '阿里云 AliDNS',
-                color: 'orange'
-            },
-            tencent: {
-                url: 'https://doh.pub/dns-query',
-                name: '腾讯云 DNSPod',
-                color: 'green'
+            methods: {
+                goBack() {
+                    window.location.href = 'index.html';
+                },
+                async handleSearch({values, errors}) {
+                    if (errors) return;
+                    
+                    try {
+                        this.loading = true;
+                        this.result = null;
+                        this.rawJson = null;
+
+                        const provider = this.providers[this.form.provider];
+                        let url = new URL(provider.url);
+                        url.searchParams.append('name', this.form.domain);
+                        url.searchParams.append('type', this.form.type);
+
+                        const headers = {
+                            'Accept': 'application/dns-json'
+                        };
+
+                        const response = await fetch(url.toString(), { headers });
+                        if (!response.ok) {
+                            throw new Error(`HTTP Error: ${response.status}`);
+                        }
+                        
+                        const data = await response.json();
+                        this.rawJson = data;
+                        this.result = data;
+                        
+                        if (data.Status !== 0) {
+                            Message.warning(`查询返回非正常状态: ${this.rcodeMap[data.Status] || data.Status}`);
+                        } else {
+                            Message.success('查询成功');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        Message.error(`查询失败: ${err.message}`);
+                    } finally {
+                        this.loading = false;
+                    }
+                }
             }
         };
 
-        const recordTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'PTR', 'SOA', 'SRV'];
-
-        // DNS Response Code Mapping
-        const rcodeMap = {
-            0: 'NOERROR',
-            1: 'FORMERR',
-            2: 'SERVFAIL',
-            3: 'NXDOMAIN',
-            4: 'NOTIMP',
-            5: 'REFUSED'
-        };
-
-        // DNS Record Type Mapping (Common types)
-        const typeMap = {
-            1: 'A',
-            2: 'NS',
-            5: 'CNAME',
-            6: 'SOA',
-            12: 'PTR',
-            15: 'MX',
-            16: 'TXT',
-            28: 'AAAA',
-            33: 'SRV'
-        };
-
-        function App() {
-            const [form] = Form.useForm();
-            const [loading, setLoading] = React.useState(false);
-            const [result, setResult] = React.useState(null);
-            const [rawJson, setRawJson] = React.useState(null);
-
-            const handleSearch = async () => {
-                try {
-                    const values = await form.validate();
-                    setLoading(true);
-                    setResult(null);
-                    setRawJson(null);
-
-                    const provider = providers[values.provider];
-                    let url = new URL(provider.url);
-                    url.searchParams.append('name', values.domain);
-                    url.searchParams.append('type', values.type);
-
-                    const headers = {
-                        'Accept': 'application/dns-json'
-                    };
-
-                    const response = await fetch(url.toString(), { headers });
-                    if (!response.ok) {
-                        throw new Error(`HTTP Error: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    setRawJson(data);
-                    setResult(data);
-                    
-                    if (data.Status !== 0) {
-                        Message.warning(`查询返回非正常状态: ${rcodeMap[data.Status] || data.Status}`);
-                    } else {
-                        Message.success('查询成功');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    Message.error(`查询失败: ${err.message}`);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const columns = [
-                {
-                    title: '记录名 (Name)',
-                    dataIndex: 'name',
-                    render: (text) => <span style={{ wordBreak: 'break-all' }}>{text}</span>
-                },
-                {
-                    title: '类型 (Type)',
-                    dataIndex: 'type',
-                    width: 100,
-                    render: (type) => <Tag color="arcoblue">{typeMap[type] || type}</Tag>
-                },
-                {
-                    title: 'TTL',
-                    dataIndex: 'TTL',
-                    width: 80,
-                },
-                {
-                    title: '记录值 (Data)',
-                    dataIndex: 'data',
-                    render: (text) => <span style={{ wordBreak: 'break-all', fontFamily: 'monospace' }}>{text}</span>
-                }
-            ];
-
-            return (
-                <Layout style={{ minHeight: '100vh' }}>
-                    <PageHeader
-                        style={{ background: '#fff', borderBottom: '1px solid #e5e6eb' }}
-                        title="DNS over HTTPS 工具"
-                        subTitle="安全、快速的域名解析查询"
-                        backIcon
-                        onBack={() => window.location.href = 'index.html'}
-                    />
-                    <Content style={{ padding: '24px' }}>
-                        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-                            <Card bordered={false} style={{ marginBottom: 24 }}>
-                                <Form
-                                    form={form}
-                                    layout="vertical"
-                                    initialValues={{
-                                        provider: 'cloudflare',
-                                        type: 'A'
-                                    }}
-                                    onSubmit={handleSearch}
-                                >
-                                    <Row gutter={24}>
-                                        <Col xs={24} sm={24} md={8}>
-                                            <Form.Item label="DoH 服务商" field="provider" rules={[{ required: true }]}>
-                                                <Select>
-                                                    {Object.entries(providers).map(([key, p]) => (
-                                                        <Select.Option key={key} value={key}>
-                                                            {p.name}
-                                                        </Select.Option>
-                                                    ))}
-                                                </Select>
-                                            </Form.Item>
-                                        </Col>
-                                        <Col xs={24} sm={24} md={10}>
-                                            <Form.Item label="域名 (Domain)" field="domain" rules={[{ required: true, message: '请输入域名' }]}>
-                                                <Input placeholder="example.com" allowClear />
-                                            </Form.Item>
-                                        </Col>
-                                        <Col xs={16} sm={16} md={6}>
-                                            <Form.Item label="记录类型" field="type" rules={[{ required: true }]}>
-                                                <Select>
-                                                    {recordTypes.map(t => (
-                                                        <Select.Option key={t} value={t}>{t}</Select.Option>
-                                                    ))}
-                                                </Select>
-                                            </Form.Item>
-                                        </Col>
-                                        <Col xs={8} sm={8} md={24} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-                                             {/* Mobile button alignment fix */}
-                                        </Col>
-                                    </Row>
-                                    <Form.Item style={{ marginBottom: 0 }}>
-                                        <Button type="primary" htmlType="submit" long loading={loading} icon={<IconSearch />}>
-                                            立即查询
-                                        </Button>
-                                    </Form.Item>
-                                </Form>
-                            </Card>
-
-                            {loading && (
-                                <div style={{ textAlign: 'center', padding: 40 }}>
-                                    <Spin tip="正在向 DoH 服务器查询..." />
-                                </div>
-                            )}
-
-                            {result && (
-                                <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                                    <Card title="查询结果" bordered={false}>
-                                        <Descriptions
-                                            column={1}
-                                            data={[
-                                                { label: '状态', value: <Tag color={result.Status === 0 ? 'green' : 'red'}>{rcodeMap[result.Status] || result.Status}</Tag> },
-                                                { label: '响应时间', value: new Date().toLocaleTimeString() },
-                                                { label: 'TC (Truncated)', value: result.TC ? '是' : '否' },
-                                                { label: 'RD (Recursion Desired)', value: result.RD ? '是' : '否' },
-                                                { label: 'RA (Recursion Available)', value: result.RA ? '是' : '否' },
-                                            ]}
-                                            style={{ marginBottom: 24 }}
-                                            labelStyle={{ width: 140 }}
-                                        />
-                                        
-                                        <Title heading={6}>Answer Records</Title>
-                                        {result.Answer && result.Answer.length > 0 ? (
-                                            <Table
-                                                columns={columns}
-                                                data={result.Answer}
-                                                pagination={false}
-                                                rowKey={(r, i) => i}
-                                                scroll={{ x: 600 }}
-                                            />
-                                        ) : (
-                                            <Empty description="未找到记录 (No Answer)" />
-                                        )}
-                                    </Card>
-
-                                    <Card title="原始 JSON 响应" bordered={false}>
-                                        <pre>{JSON.stringify(rawJson, null, 2)}</pre>
-                                    </Card>
-                                </Space>
-                            )}
-                        </div>
-                    </Content>
-                </Layout>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        const app = createApp(App);
+        app.use(ArcoVue);
+        app.use(ArcoVueIcon);
+        app.mount('#app');
     </script>
 </body>
 </html>

@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VePlayer 嵌入生成器 - VisionKit</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-react@latest/dist/css/arco.min.css">
-    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco.min.js"></script>
-    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco-icon.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-vue@latest/dist/arco-vue.min.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-vue@latest/dist/arco-vue-icon.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-vue@latest/dist/arco.css">
     <!-- VePlayer SDK for Preview -->
     <link rel="stylesheet" href="https://lf-unpkg.volccdn.com/obj/vcloudfe/sdk/@volcengine/veplayer/1.10.0/index.min.css" />
     <script src="https://lf-unpkg.volccdn.com/obj/vcloudfe/sdk/@volcengine/veplayer/1.10.0/index.min.js"></script>
@@ -34,31 +32,109 @@
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="app">
+        <a-layout style="min-height: 100vh;">
+            <a-page-header
+                style="background: #fff; border-bottom: 1px solid #e5e6eb;"
+                title="VePlayer 嵌入生成器"
+                subtitle="生成标准的 VePlayer 初始化代码"
+                @back="goBack"
+            ></a-page-header>
+            <a-layout-content style="padding: 24px;">
+                <div style="max-width: 1200px; margin: 0 auto;">
+                    <a-row :gutter="[24, 24]">
+                        <a-col :xs="24" :md="10">
+                            <a-card title="配置参数" :bordered="false">
+                                <a-form
+                                    :model="form"
+                                    layout="vertical"
+                                >
+                                    <a-form-item label="视频流地址 (URL)" field="url" :rules="[{ required: true }]">
+                                        <a-input v-model="form.url" placeholder="mp4 / m3u8 地址" />
+                                    </a-form-item>
+                                    <a-form-item label="封面图 (Poster URL)" field="poster">
+                                        <a-input v-model="form.poster" placeholder="可选" />
+                                    </a-form-item>
+                                    <a-row :gutter="16">
+                                        <a-col :span="8">
+                                            <a-form-item label="直播模式" field="isLive">
+                                                <a-switch v-model="form.isLive" />
+                                            </a-form-item>
+                                        </a-col>
+                                        <a-col :span="8">
+                                            <a-form-item label="自动播放" field="autoplay">
+                                                <a-switch v-model="form.autoplay" />
+                                            </a-form-item>
+                                        </a-col>
+                                        <a-col :span="8">
+                                            <a-form-item label="显示控制栏" field="controls">
+                                                <a-switch v-model="form.controls" />
+                                            </a-form-item>
+                                        </a-col>
+                                    </a-row>
+                                    <a-button type="primary" long @click="handleGenerate">
+                                        <template #icon><icon-refresh /></template>
+                                        生成代码并预览
+                                    </a-button>
+                                </a-form>
+                            </a-card>
 
-    <script type="text/babel" data-cfasync="false">
-        const { Layout, Card, Form, Input, Switch, Button, Grid, Typography, Message, PageHeader, Divider } = arco;
-        const { Content } = Layout;
-        const { Title, Text } = Typography;
-        const { Row, Col } = Grid;
-        const { IconCopy, IconRefresh, IconPlayCircle } = arcoicon;
+                            <a-card title="嵌入代码" :bordered="false" style="margin-top: 24px;">
+                                <a-textarea 
+                                    v-model="code" 
+                                    :auto-size="{ minRows: 6, maxRows: 12 }"
+                                    placeholder="点击生成按钮获取代码..."
+                                />
+                                <a-button type="secondary" long style="margin-top: 16px;" @click="handleCopy" :disabled="!code">
+                                    <template #icon><icon-copy /></template> 一键复制
+                                </a-button>
+                            </a-card>
+                        </a-col>
+                        <a-col :xs="24" :md="14">
+                            <a-card title="效果预览" :bordered="false" style="height: 100%;">
+                                <div class="preview-wrapper">
+                                    <div id="preview-player"></div>
+                                </div>
+                            </a-card>
+                        </a-col>
+                    </a-row>
+                </div>
+            </a-layout-content>
+        </a-layout>
+    </div>
 
-        function App() {
-            const [form] = Form.useForm();
-            const [code, setCode] = React.useState('');
-            
-            // Preview player instance reference
-            const playerRef = React.useRef(null);
+    <script>
+        const { createApp } = Vue;
+        const { Message } = ArcoVue;
 
-            const handleGenerate = () => {
-                const values = form.getFieldsValue();
-                if (!values.url) {
-                    Message.error('请输入视频地址');
-                    return;
-                }
+        const App = {
+            data() {
+                return {
+                    form: {
+                        url: 'https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/byted-player-videos/1.0.0/xgplayer-demo.mp4',
+                        poster: '',
+                        isLive: false,
+                        autoplay: false,
+                        controls: true
+                    },
+                    code: '',
+                    playerInstance: null
+                };
+            },
+            methods: {
+                goBack() {
+                    window.location.href = 'index.html';
+                },
+                handleGenerate() {
+                    if (!this.form.url) {
+                        Message.error('请输入视频地址');
+                        return;
+                    }
 
-                // Generate Code
-                const scriptCode = `
+                    const values = this.form;
+
+                    // Generate Code
+                    const scriptCode = `
 <!-- 引入 VePlayer -->
 <link rel="stylesheet" href="https://lf-unpkg.volccdn.com/obj/vcloudfe/sdk/@volcengine/veplayer/1.10.0/index.min.css" />
 <script src="https://lf-unpkg.volccdn.com/obj/vcloudfe/sdk/@volcengine/veplayer/1.10.0/index.min.js"><\/script>
@@ -82,127 +158,51 @@
         }
     });
 <\/script>
-                `.trim();
-                
-                setCode(scriptCode);
+                    `.trim();
+                    
+                    this.code = scriptCode;
 
-                // Update Preview
-                if (playerRef.current) {
-                    playerRef.current.destroy();
-                }
+                    // Update Preview
+                    if (this.playerInstance) {
+                        this.playerInstance.destroy();
+                    }
 
-                try {
-                    playerRef.current = new VePlayer({
-                        id: 'preview-player',
-                        width: '100%',
-                        height: '100%',
-                        url: values.url,
-                        poster: values.poster,
-                        isLive: values.isLive,
-                        autoplay: values.autoplay,
-                        controls: values.controls,
-                        vodLogOpts: {
-                            line_app_id: 1, // 00000001
-                            tag: '普通视频'
-                        }
+                    try {
+                        this.playerInstance = new VePlayer({
+                            id: 'preview-player',
+                            width: '100%',
+                            height: '100%',
+                            url: values.url,
+                            poster: values.poster,
+                            isLive: values.isLive,
+                            autoplay: values.autoplay,
+                            controls: values.controls,
+                            vodLogOpts: {
+                                line_app_id: 1, // 00000001
+                                tag: '普通视频'
+                            }
+                        });
+                        Message.success('预览已更新');
+                    } catch (e) {
+                        console.error(e);
+                        Message.error('预览初始化失败');
+                    }
+                },
+                handleCopy() {
+                    if (!this.code) return;
+                    navigator.clipboard.writeText(this.code).then(() => {
+                        Message.success('代码已复制');
+                    }).catch(() => {
+                        Message.error('复制失败');
                     });
-                    Message.success('预览已更新');
-                } catch (e) {
-                    console.error(e);
-                    Message.error('预览初始化失败');
                 }
-            };
+            }
+        };
 
-            const handleCopy = () => {
-                if (!code) return;
-                navigator.clipboard.writeText(code).then(() => {
-                    Message.success('代码已复制');
-                }).catch(() => {
-                    Message.error('复制失败');
-                });
-            };
-
-            return (
-                <Layout style={{ minHeight: '100vh' }}>
-                    <PageHeader
-                        style={{ background: '#fff', borderBottom: '1px solid #e5e6eb' }}
-                        title="VePlayer 嵌入生成器"
-                        subTitle="生成标准的 VePlayer 初始化代码"
-                        backIcon
-                        onBack={() => window.location.href = 'index.html'}
-                    />
-                    <Content style={{ padding: '24px' }}>
-                        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-                            <Row gutter={[24, 24]}>
-                                <Col xs={24} md={10}>
-                                    <Card title="配置参数" bordered={false}>
-                                        <Form
-                                            form={form}
-                                            layout="vertical"
-                                            initialValues={{
-                                                url: 'https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/byted-player-videos/1.0.0/xgplayer-demo.mp4',
-                                                poster: '',
-                                                isLive: false,
-                                                autoplay: false,
-                                                controls: true
-                                            }}
-                                        >
-                                            <Form.Item label="视频流地址 (URL)" field="url" rules={[{ required: true }]}>
-                                                <Input placeholder="mp4 / m3u8 地址" />
-                                            </Form.Item>
-                                            <Form.Item label="封面图 (Poster URL)" field="poster">
-                                                <Input placeholder="可选" />
-                                            </Form.Item>
-                                            <Row gutter={16}>
-                                                <Col span={8}>
-                                                    <Form.Item label="直播模式" field="isLive" triggerPropName="checked">
-                                                        <Switch />
-                                                    </Form.Item>
-                                                </Col>
-                                                <Col span={8}>
-                                                    <Form.Item label="自动播放" field="autoplay" triggerPropName="checked">
-                                                        <Switch />
-                                                    </Form.Item>
-                                                </Col>
-                                                <Col span={8}>
-                                                    <Form.Item label="显示控制栏" field="controls" triggerPropName="checked">
-                                                        <Switch />
-                                                    </Form.Item>
-                                                </Col>
-                                            </Row>
-                                            <Button type="primary" long onClick={handleGenerate} icon={<IconRefresh />}>
-                                                生成代码并预览
-                                            </Button>
-                                        </Form>
-                                    </Card>
-
-                                    <Card title="嵌入代码" bordered={false} style={{ marginTop: 24 }}>
-                                        <Input.TextArea 
-                                            value={code} 
-                                            autoSize={{ minRows: 6, maxRows: 12 }}
-                                            placeholder="点击生成按钮获取代码..."
-                                        />
-                                        <Button type="secondary" long style={{ marginTop: 16 }} onClick={handleCopy} disabled={!code}>
-                                            <IconCopy /> 一键复制
-                                        </Button>
-                                    </Card>
-                                </Col>
-                                <Col xs={24} md={14}>
-                                    <Card title="效果预览" bordered={false} style={{ height: '100%' }}>
-                                        <div className="preview-wrapper">
-                                            <div id="preview-player"></div>
-                                        </div>
-                                    </Card>
-                                </Col>
-                            </Row>
-                        </div>
-                    </Content>
-                </Layout>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        const app = createApp(App);
+        app.use(ArcoVue);
+        app.use(ArcoVueIcon);
+        app.mount('#app');
     </script>
 </body>
 </html>

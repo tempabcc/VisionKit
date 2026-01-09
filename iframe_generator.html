@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>通用 Iframe 生成器 - VisionKit</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-react@latest/dist/css/arco.min.css">
-    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco.min.js"></script>
-    <script src="https://unpkg.com/@arco-design/web-react@latest/dist/arco-icon.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-vue@latest/dist/arco-vue.min.js"></script>
+    <script src="https://unpkg.com/@arco-design/web-vue@latest/dist/arco-vue-icon.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-vue@latest/dist/arco.css">
     <style>
         body { background-color: #f2f3f5; }
         .preview-container {
@@ -30,244 +28,243 @@
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="app">
+        <a-layout style="min-height: 100vh;">
+            <a-page-header
+                style="background: #fff; border-bottom: 1px solid #e5e6eb;"
+                title="通用 Iframe 生成器"
+                subtitle="生成高度可定制的 Iframe 嵌入代码"
+                @back="goBack"
+            ></a-page-header>
+            <a-layout-content style="padding: 24px;">
+                <div style="max-width: 1200px; margin: 0 auto;">
+                    <a-alert type="info" title="操作指引" style="margin-bottom: 24px;">
+                        1. 输入需要嵌入的目标网页地址 (URL)。<br/>
+                        2. 调整宽度、高度和其他显示选项。<br/>
+                        3. 点击“生成代码”按钮预览效果并获取代码。<br/>
+                        注意：生成的 Iframe 能否正常显示取决于目标网站的安全策略 (CSP/X-Frame-Options)。
+                    </a-alert>
 
-    <script type="text/babel" data-cfasync="false">
-        const { Layout, Card, Form, Input, InputNumber, Switch, Button, Grid, Typography, Message, PageHeader, Space, Tooltip, Collapse, Select } = arco;
-        const { Content } = Layout;
-        const { Title, Text } = Typography;
-        const { Row, Col } = Grid;
-        const { IconCopy, IconCode, IconRefresh, IconInfoCircle } = arcoicon;
+                    <a-row :gutter="[24, 24]">
+                        <!-- Configuration Panel -->
+                        <a-col :xs="24" :md="10">
+                            <a-card title="配置参数" :bordered="false">
+                                <a-form
+                                    :model="form"
+                                    layout="vertical"
+                                >
+                                    <a-form-item label="源地址 (URL)" field="src" :rules="[{ required: true }]">
+                                        <a-input v-model="form.src" placeholder="https://example.com" />
+                                    </a-form-item>
 
-        function App() {
-            const [form] = Form.useForm();
-            const [code, setCode] = React.useState('');
-            const [previewConfig, setPreviewConfig] = React.useState(null);
+                                    <a-row :gutter="16">
+                                        <a-col :span="14">
+                                            <a-form-item label="宽度" field="width">
+                                                <a-input-number v-model="form.width" :min="0" />
+                                            </a-form-item>
+                                        </a-col>
+                                        <a-col :span="10">
+                                            <a-form-item label="单位" field="widthType">
+                                                <a-select v-model="form.widthType" :options="['px', '%']" />
+                                            </a-form-item>
+                                        </a-col>
+                                    </a-row>
 
-            const generateCode = () => {
-                const values = form.getFieldsValue();
-                if (!values.src) {
-                    Message.warning('请输入嵌入地址 (URL)');
-                    return;
+                                    <a-row :gutter="16">
+                                        <a-col :span="14">
+                                            <a-form-item label="高度" field="height">
+                                                <a-input-number v-model="form.height" :min="0" />
+                                            </a-form-item>
+                                        </a-col>
+                                        <a-col :span="10">
+                                            <a-form-item label="单位" field="heightType">
+                                                <a-select v-model="form.heightType" :options="['px', '%']" />
+                                            </a-form-item>
+                                        </a-col>
+                                    </a-row>
+
+                                    <a-collapse :default-active-key="['1']" style="margin-bottom: 24px;">
+                                        <a-collapse-item header="高级选项" key="1">
+                                            <a-row :gutter="16">
+                                                <a-col :span="12">
+                                                    <a-form-item label="显示边框" field="border">
+                                                        <a-switch v-model="form.border" />
+                                                    </a-form-item>
+                                                </a-col>
+                                                <a-col :span="12">
+                                                    <a-form-item field="allowFullscreen">
+                                                        <template #label>
+                                                            <a-space>
+                                                                允许全屏
+                                                                <a-tooltip content="包含 webkit/moz/ms 前缀以支持旧版浏览器">
+                                                                    <icon-info-circle />
+                                                                </a-tooltip>
+                                                            </a-space>
+                                                        </template>
+                                                        <a-switch v-model="form.allowFullscreen" />
+                                                    </a-form-item>
+                                                </a-col>
+                                                <a-col :span="12">
+                                                    <a-form-item label="允许滚动条" field="scrolling">
+                                                        <a-switch v-model="form.scrolling" />
+                                                    </a-form-item>
+                                                </a-col>
+                                                <a-col :span="12">
+                                                    <a-form-item label="字体大小 (pt)" field="fontSize">
+                                                        <a-input-number v-model="form.fontSize" :min="8" :max="72" />
+                                                    </a-form-item>
+                                                </a-col>
+                                                <a-col :span="24">
+                                                    <a-form-item field="sandbox">
+                                                        <template #label>
+                                                            <a-space>
+                                                                启用沙箱 (Sandbox)
+                                                                <a-tooltip content="增加安全性，但可能限制部分功能">
+                                                                    <icon-info-circle />
+                                                                </a-tooltip>
+                                                            </a-space>
+                                                        </template>
+                                                        <a-switch v-model="form.sandbox" />
+                                                    </a-form-item>
+                                                </a-col>
+                                            </a-row>
+                                        </a-collapse-item>
+                                    </a-collapse>
+
+                                    <a-button type="primary" long @click="generateCode">
+                                        <template #icon><icon-code /></template>
+                                        生成代码
+                                    </a-button>
+                                </a-form>
+                            </a-card>
+                        </a-col>
+
+                        <!-- Preview & Output Panel -->
+                        <a-col :xs="24" :md="14">
+                            <a-space direction="vertical" size="large" style="width: 100%;">
+                                <a-card title="生成的代码" :bordered="false">
+                                    <a-textarea 
+                                        v-model="code" 
+                                        :auto-size="{ minRows: 4, maxRows: 8 }"
+                                        placeholder="点击左侧生成按钮..."
+                                        style="font-family: monospace; font-size: 13px; color: #0057b7;"
+                                    />
+                                    <div style="margin-top: 12px; text-align: right;">
+                                        <a-button type="secondary" @click="handleCopy" :disabled="!code">
+                                            <template #icon><icon-copy /></template> 复制到剪贴板
+                                        </a-button>
+                                    </div>
+                                </a-card>
+
+                                <a-card title="效果预览" :bordered="false">
+                                    <div class="preview-container">
+                                        <div v-if="previewConfig" v-html="previewConfig.html"></div>
+                                        <div v-else style="text-align: center; color: #86909c;">
+                                            <icon-code style="font-size: 48px; margin-bottom: 16px;" />
+                                            <p>生成后在此处查看预览</p>
+                                        </div>
+                                    </div>
+                                    <div v-if="previewConfig" style="margin-top: 12px; font-size: 12px; color: #86909c;">
+                                        <icon-info-circle /> 注意：部分网站（如 Google, GitHub）设置了 X-Frame-Options 响应头，禁止被嵌入 Iframe 中。
+                                    </div>
+                                </a-card>
+                            </a-space>
+                        </a-col>
+                    </a-row>
+                </div>
+            </a-layout-content>
+        </a-layout>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        const { Message } = ArcoVue;
+
+        const App = {
+            data() {
+                return {
+                    form: {
+                        src: 'https://www.bing.com',
+                        width: 600,
+                        widthType: 'px',
+                        height: 338,
+                        heightType: 'px',
+                        border: false,
+                        scrolling: true,
+                        allowFullscreen: true,
+                        sandbox: false,
+                        fontSize: 12
+                    },
+                    code: '',
+                    previewConfig: null
+                };
+            },
+            methods: {
+                goBack() {
+                    window.location.href = 'index.html';
+                },
+                generateCode() {
+                    if (!this.form.src) {
+                        Message.warning('请输入嵌入地址 (URL)');
+                        return;
+                    }
+
+                    const values = this.form;
+                    
+                    // Construct attributes
+                    const attrs = [];
+                    attrs.push(`src="${values.src}"`);
+                    
+                    // Dimensions
+                    const w = values.widthType === 'px' ? values.width : `${values.width}%`;
+                    const h = values.heightType === 'px' ? values.height : `${values.height}%`;
+                    attrs.push(`width="${w}"`);
+                    attrs.push(`height="${h}"`);
+
+                    // Borders & Scroll
+                    attrs.push(`frameborder="${values.border ? 1 : 0}"`);
+                    if (values.scrolling === false) attrs.push(`scrolling="no"`);
+                    
+                    // Fullscreen support
+                    if (values.allowFullscreen) {
+                        attrs.push('allowfullscreen');
+                        attrs.push('webkitallowfullscreen');
+                        attrs.push('mozallowfullscreen');
+                        attrs.push('oallowfullscreen');
+                        attrs.push('msallowfullscreen');
+                    }
+
+                    // Sandbox
+                    if (values.sandbox) {
+                        attrs.push('sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-presentation"');
+                    }
+
+                    // Styles
+                    const styles = [];
+                    if (!values.border) styles.push('border: 0');
+                    if (values.fontSize) styles.push(`font-size: ${values.fontSize}pt`);
+                    if (styles.length > 0) {
+                        attrs.push(`style="${styles.join('; ')}"`);
+                    }
+
+                    const iframeCode = `<iframe ${attrs.join(' ')}></iframe>`;
+                    this.code = iframeCode;
+                    this.previewConfig = { ...values, html: iframeCode };
+                    Message.success('代码已生成');
+                },
+                handleCopy() {
+                    if (!this.code) return;
+                    navigator.clipboard.writeText(this.code).then(() => {
+                        Message.success('代码已复制');
+                    });
                 }
+            }
+        };
 
-                // Construct attributes
-                const attrs = [];
-                attrs.push(`src="${values.src}"`);
-                
-                // Dimensions
-                const w = values.widthType === 'px' ? values.width : `${values.width}%`;
-                const h = values.heightType === 'px' ? values.height : `${values.height}%`;
-                attrs.push(`width="${w}"`);
-                attrs.push(`height="${h}"`);
-
-                // Borders & Scroll
-                attrs.push(`frameborder="${values.border ? 1 : 0}"`);
-                if (values.scrolling === false) attrs.push(`scrolling="no"`);
-                
-                // Fullscreen support
-                if (values.allowFullscreen) {
-                    attrs.push('allowfullscreen');
-                    // Legacy attributes for older browsers
-                    attrs.push('webkitallowfullscreen');
-                    attrs.push('mozallowfullscreen');
-                    attrs.push('oallowfullscreen');
-                    attrs.push('msallowfullscreen');
-                }
-
-                // Sandbox
-                if (values.sandbox) {
-                    attrs.push('sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-presentation"');
-                }
-
-                // Styles
-                const styles = [];
-                if (!values.border) styles.push('border: 0');
-                if (values.fontSize) styles.push(`font-size: ${values.fontSize}pt`);
-                if (styles.length > 0) {
-                    attrs.push(`style="${styles.join('; ')}"`);
-                }
-
-                const iframeCode = `<iframe ${attrs.join(' ')}></iframe>`;
-                setCode(iframeCode);
-                setPreviewConfig({ ...values, html: iframeCode });
-                Message.success('代码已生成');
-            };
-
-            const handleCopy = () => {
-                if (!code) return;
-                navigator.clipboard.writeText(code).then(() => {
-                    Message.success('代码已复制');
-                });
-            };
-
-            return (
-                <Layout style={{ minHeight: '100vh' }}>
-                    <PageHeader
-                        style={{ background: '#fff', borderBottom: '1px solid #e5e6eb' }}
-                        title="通用 Iframe 生成器"
-                        subTitle="生成高度可定制的 Iframe 嵌入代码"
-                        backIcon
-                        onBack={() => window.location.href = 'index.html'}
-                    />
-                    <Content style={{ padding: '24px' }}>
-                        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-                            <Row gutter={[24, 24]}>
-                                {/* Configuration Panel */}
-                                <Col xs={24} md={10}>
-                                    <Card title="配置参数" bordered={false}>
-                                        <Form
-                                            form={form}
-                                            layout="vertical"
-                                            initialValues={{
-                                                src: 'https://www.bing.com',
-                                                width: 600,
-                                                widthType: 'px',
-                                                height: 338,
-                                                heightType: 'px',
-                                                border: false,
-                                                scrolling: true,
-                                                allowFullscreen: true,
-                                                sandbox: false,
-                                                fontSize: 12
-                                            }}
-                                        >
-                                            <Form.Item label="源地址 (URL)" field="src" rules={[{ required: true }]}>
-                                                <Input placeholder="https://example.com" />
-                                            </Form.Item>
-
-                                            <Row gutter={16}>
-                                                <Col span={14}>
-                                                    <Form.Item label="宽度" field="width">
-                                                        <InputNumber min={0} />
-                                                    </Form.Item>
-                                                </Col>
-                                                <Col span={10}>
-                                                    <Form.Item label="单位" field="widthType">
-                                                        <Select options={['px', '%']} />
-                                                    </Form.Item>
-                                                </Col>
-                                            </Row>
-
-                                            <Row gutter={16}>
-                                                <Col span={14}>
-                                                    <Form.Item label="高度" field="height">
-                                                        <InputNumber min={0} />
-                                                    </Form.Item>
-                                                </Col>
-                                                <Col span={10}>
-                                                    <Form.Item label="单位" field="heightType">
-                                                        <Select options={['px', '%']} />
-                                                    </Form.Item>
-                                                </Col>
-                                            </Row>
-
-                                            <Collapse defaultActiveKey={['1']} style={{ marginBottom: 24 }}>
-                                                <Collapse.Item header="高级选项" name="1">
-                                                    <Row gutter={16}>
-                                                        <Col span={12}>
-                                                            <Form.Item label="显示边框" field="border" triggerPropName="checked">
-                                                                <Switch />
-                                                            </Form.Item>
-                                                        </Col>
-                                                        <Col span={12}>
-                                                            <Form.Item 
-                                                                label={
-                                                                    <Space>
-                                                                        允许全屏
-                                                                        <Tooltip content="包含 webkit/moz/ms 前缀以支持旧版浏览器">
-                                                                            <IconInfoCircle />
-                                                                        </Tooltip>
-                                                                    </Space>
-                                                                } 
-                                                                field="allowFullscreen" 
-                                                                triggerPropName="checked"
-                                                            >
-                                                                <Switch />
-                                                            </Form.Item>
-                                                        </Col>
-                                                        <Col span={12}>
-                                                            <Form.Item label="允许滚动条" field="scrolling" triggerPropName="checked">
-                                                                <Switch />
-                                                            </Form.Item>
-                                                        </Col>
-                                                        <Col span={12}>
-                                                            <Form.Item label="字体大小 (pt)" field="fontSize">
-                                                                <InputNumber min={8} max={72} />
-                                                            </Form.Item>
-                                                        </Col>
-                                                        <Col span={24}>
-                                                            <Form.Item 
-                                                                label={
-                                                                    <Space>
-                                                                        启用沙箱 (Sandbox)
-                                                                        <Tooltip content="增加安全性，但可能限制部分功能">
-                                                                            <IconInfoCircle />
-                                                                        </Tooltip>
-                                                                    </Space>
-                                                                } 
-                                                                field="sandbox" 
-                                                                triggerPropName="checked"
-                                                            >
-                                                                <Switch />
-                                                            </Form.Item>
-                                                        </Col>
-                                                    </Row>
-                                                </Collapse.Item>
-                                            </Collapse>
-
-                                            <Button type="primary" long onClick={generateCode} icon={<IconCode />}>
-                                                生成代码
-                                            </Button>
-                                        </Form>
-                                    </Card>
-                                </Col>
-
-                                {/* Preview & Output Panel */}
-                                <Col xs={24} md={14}>
-                                    <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                                        <Card title="生成的代码" bordered={false}>
-                                            <Input.TextArea 
-                                                value={code} 
-                                                autoSize={{ minRows: 4, maxRows: 8 }}
-                                                placeholder="点击左侧生成按钮..."
-                                                style={{ fontFamily: 'monospace', fontSize: 13, color: '#0057b7' }}
-                                            />
-                                            <div style={{ marginTop: 12, textAlign: 'right' }}>
-                                                <Button type="secondary" onClick={handleCopy} disabled={!code}>
-                                                    <IconCopy /> 复制到剪贴板
-                                                </Button>
-                                            </div>
-                                        </Card>
-
-                                        <Card title="效果预览" bordered={false}>
-                                            <div className="preview-container">
-                                                {previewConfig ? (
-                                                    <div dangerouslySetInnerHTML={{ __html: previewConfig.html }} />
-                                                ) : (
-                                                    <div style={{ textAlign: 'center', color: '#86909c' }}>
-                                                        <IconCode style={{ fontSize: 48, marginBottom: 16 }} />
-                                                        <p>生成后在此处查看预览</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {previewConfig && (
-                                                <div style={{ marginTop: 12, fontSize: 12, color: '#86909c' }}>
-                                                    <IconInfoCircle /> 注意：部分网站（如 Google, GitHub）设置了 X-Frame-Options 响应头，禁止被嵌入 Iframe 中。
-                                                </div>
-                                            )}
-                                        </Card>
-                                    </Space>
-                                </Col>
-                            </Row>
-                        </div>
-                    </Content>
-                </Layout>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        const app = createApp(App);
+        app.use(ArcoVue);
+        app.use(ArcoVueIcon);
+        app.mount('#app');
     </script>
 </body>
 </html>
