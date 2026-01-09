@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player</title>
+    <link href="https://unpkg.com/video.js/dist/video-js.min.css" rel="stylesheet">
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        .video-js { width: 100%; height: 100%; }
+        /* 强制修正播放按钮居中：清除默认 margin 并使用 transform */
+        .video-js.vjs-big-play-centered .vjs-big-play-button {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <video id="my-video" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" playsinline>
+        <p class="vjs-no-js">
+            To view this video please enable JavaScript, and consider upgrading to a web browser that
+            <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
+        </p>
+    </video>
+
+    <script src="https://unpkg.com/video.js/dist/video.min.js"></script>
+    <script>
+        // 获取 URL 参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const src = urlParams.get('src');
+        const type = urlParams.get('type');
+        const poster = urlParams.get('poster');
+        const autoplay = urlParams.get('autoplay') === '1' || urlParams.get('autoplay') === 'true';
+
+        // 改进后的类型识别逻辑
+        function getVjsType(url) {
+            // 移除可能存在的查询参数
+            const cleanUrl = url.split('?')[0].toLowerCase();
+            if (cleanUrl.endsWith('.m3u8')) return 'application/x-mpegURL';
+            if (cleanUrl.endsWith('.mpd')) return 'application/dash+xml';
+            if (cleanUrl.endsWith('.webm')) return 'video/webm';
+            if (cleanUrl.endsWith('.ogv')) return 'video/ogg';
+            return 'video/mp4'; // 默认 MP4
+        }
+
+        if (src) {
+            const player = videojs('my-video', {
+                autoplay: autoplay,
+                poster: poster,
+                sources: [{
+                    src: src,
+                    type: type || getVjsType(src)
+                }]
+            });
+            
+            // 错误处理
+            player.on('error', function() {
+                console.error('Video Error:', player.error());
+            });
+        } else {
+            document.body.innerHTML = '<div style="color:white;display:flex;justify-content:center;align-items:center;height:100%;">No video source provided</div>';
+        }
+    </script>
+</body>
+</html>

@@ -54,7 +54,10 @@
                                     layout="vertical"
                                 >
                                     <a-form-item label="源地址 (URL)" field="src" :rules="[{ required: true }]">
-                                        <a-input v-model="form.src" placeholder="https://example.com" />
+                                        <a-input v-model="form.src" placeholder="https://example.com/page 或 video.mp4" @blur="handleSrcBlur" />
+                                        <div v-if="isVideoUrl" style="margin-top: 8px; font-size: 12px; color: #165dff;">
+                                            <icon-video-camera /> 检测到视频链接，将自动使用内置播放器生成嵌入代码。
+                                        </div>
                                     </a-form-item>
 
                                     <a-row :gutter="16">
@@ -198,12 +201,20 @@
                         fontSize: 12
                     },
                     code: '',
-                    previewConfig: null
+                    previewConfig: null,
+                    isVideoUrl: false
                 };
             },
             methods: {
                 goBack() {
                     window.location.href = 'index.html';
+                },
+                handleSrcBlur() {
+                    const url = this.form.src.toLowerCase();
+                    this.isVideoUrl = url.endsWith('.mp4') || 
+                                    url.endsWith('.m3u8') || 
+                                    url.endsWith('.webm') || 
+                                    url.endsWith('.ogv');
                 },
                 generateCode() {
                     if (!this.form.src) {
@@ -215,7 +226,17 @@
                     
                     // Construct attributes
                     const attrs = [];
-                    attrs.push(`src="${values.src}"`);
+                    
+                    // Check if video mode
+                    let finalSrc = values.src;
+                    if (this.isVideoUrl) {
+                        // Get current base URL path to locate simple_player.html
+                        // Assuming simple_player.html is in the same directory
+                        const playerPath = 'simple_player.html'; 
+                        finalSrc = `${playerPath}?src=${encodeURIComponent(values.src)}`;
+                    }
+                    
+                    attrs.push(`src="${finalSrc}"`);
                     
                     // Dimensions
                     const w = values.widthType === 'px' ? values.width : `${values.width}%`;
