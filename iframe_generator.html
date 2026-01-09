@@ -146,10 +146,13 @@
                                     <a-textarea 
                                         v-model="code" 
                                         :auto-size="{ minRows: 4, maxRows: 8 }"
-                                        placeholder="点击左侧生成按钮..."
+                                        placeholder="点击左侧生成按钮，或直接粘贴 Iframe 代码..."
                                         style="font-family: monospace; font-size: 13px; color: #0057b7;"
-                                    />
-                                    <div style="margin-top: 12px; text-align: right;">
+                                    ></a-textarea>
+                                    <div style="margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px;">
+                                        <a-button type="primary" status="success" @click="handlePreviewFromCode" :disabled="!code">
+                                            <template #icon><icon-play-circle /></template> 预览代码
+                                        </a-button>
                                         <a-button type="secondary" @click="handleCopy" :disabled="!code">
                                             <template #icon><icon-copy /></template> 复制到剪贴板
                                         </a-button>
@@ -157,9 +160,8 @@
                                 </a-card>
 
                                 <a-card title="效果预览" :bordered="false">
-                                    <div class="preview-container">
-                                        <div v-if="previewConfig" v-html="previewConfig.html"></div>
-                                        <div v-else style="text-align: center; color: #86909c;">
+                                    <div id="preview-box" class="preview-container">
+                                        <div v-if="!previewConfig" style="text-align: center; color: #86909c;">
                                             <icon-code style="font-size: 48px; margin-bottom: 16px;" />
                                             <p>生成后在此处查看预览</p>
                                         </div>
@@ -250,7 +252,34 @@
                     const iframeCode = `<iframe ${attrs.join(' ')}></iframe>`;
                     this.code = iframeCode;
                     this.previewConfig = { ...values, html: iframeCode };
+                    
+                    this.updatePreviewDOM(iframeCode);
+                    
                     Message.success('代码已生成');
+                },
+                handlePreviewFromCode() {
+                    if (!this.code) return;
+                    
+                    // 简单的校验，只要包含 <iframe 即可
+                    if (!this.code.toLowerCase().includes('<iframe')) {
+                        Message.warning('代码必须包含 <iframe> 标签');
+                        return;
+                    }
+
+                    this.previewConfig = { html: this.code };
+                    this.updatePreviewDOM(this.code);
+                    Message.success('预览已更新');
+                },
+                updatePreviewDOM(html) {
+                    this.$nextTick(() => {
+                        const container = document.getElementById('preview-box');
+                        if (container) {
+                            container.innerHTML = ''; // 清空
+                            setTimeout(() => {
+                                container.innerHTML = html; // 写入
+                            }, 10);
+                        }
+                    });
                 },
                 handleCopy() {
                     if (!this.code) return;
