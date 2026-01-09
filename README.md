@@ -2,7 +2,7 @@
 
 VisionKit 是一个基于 Web 技术的**多功能前端集成工具箱**，旨在为开发者和内容创作者提供便捷的在线工具集合。
 
-本项目采用无构建（No-Build）架构，直接通过 CDN 引入 React 和 Arco Design，无需配置复杂的开发环境，**开箱即用**。
+本项目采用无构建（No-Build）架构，直接通过 CDN 引入 Vue 3 与 Arco Design Web Vue，无需配置复杂的开发环境，开箱即用。
 
 ## 🛠 功能模块
 
@@ -25,10 +25,9 @@ VisionKit 包含以下核心工具：
 
 ## 🚀 技术栈
 
-- **核心框架**: [React 18](https://react.dev/) (UMD via CDN)
-- **UI 组件库**: [Arco Design](https://arco.design/) (React)
+- **核心框架**: [Vue 3](https://vuejs.org/) (Global Build via CDN)
+- **UI 组件库**: [Arco Design](https://arco.design/) (Web Vue)
 - **样式工具**: [Tailwind CSS](https://tailwindcss.com/)
-- **编译器**: Babel Standalone (用于浏览器端编译 JSX)
 - **播放器内核**: Volcengine VePlayer SDK
 
 ## 📦 安装与使用
@@ -36,7 +35,7 @@ VisionKit 包含以下核心工具：
 由于本项目采用无构建架构，您无需安装 Node.js 或运行 `npm install`。
 
 1. **下载或克隆项目**到本地。
-2. 直接在浏览器中打开 `index.html` 文件即可进入工具箱主页。
+2. 使用本地 HTTP 服务打开项目（推荐），再访问 `index.html` 进入工具箱主页。
 3. 点击主页上的卡片即可跳转到相应的工具页面。
 
 ### 快速预览 (VS Code)
@@ -44,6 +43,10 @@ VisionKit 包含以下核心工具：
 如果您使用 VS Code，推荐安装 "Live Server" 插件：
 1. 右键点击 `index.html`。
 2. 选择 "Open with Live Server"。
+
+### 注意事项
+
+- `media_navigation.html` 通过 `fetch('Veplayer_live_list_m3u8.json')` 读取播放列表数据，若直接以 `file://` 方式打开页面，浏览器通常会阻止读取本地 JSON 文件，请务必使用本地 HTTP 服务。
 
 ## 📝 目录结构
 
