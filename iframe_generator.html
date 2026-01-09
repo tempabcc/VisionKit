@@ -15,15 +15,114 @@
             background: #fff;
             width: 100%;
             min-height: 400px;
-            /* display: flex;  Removed to prevent overflow clipping */
-            /* align-items: center; */
-            /* justify-content: center; */
             border: 1px dashed #c9cdd4;
             border-radius: 4px;
             overflow: auto;
             padding: 20px;
             background-image: radial-gradient(#e5e6eb 1px, transparent 1px);
             background-size: 20px 20px;
+        }
+        
+        /* 布局微调 */
+        .arco-form-item-label-col {
+            margin-bottom: 6px;
+        }
+        .arco-tabs-nav-tab {
+            justify-content: flex-start;
+        }
+        .tab-content-wrapper {
+            padding: 16px 4px;
+        }
+        
+        /* 权限安全标签页样式优化 */
+        .permission-security-tab {
+            position: relative;
+            overflow: visible;
+        }
+        
+        /* 功能权限表单项样式 */
+        .permission-security-tab .arco-form-item {
+            margin-bottom: 16px;
+            position: relative;
+        }
+        
+        /* 沙箱限制模块样式 */
+        .sandbox-section {
+            margin-top: 24px;
+            padding: 0;
+            position: relative;
+            clear: both;
+            border-top: 1px solid #f2f3f5;
+            padding-top: 16px;
+            display: block;
+            width: 100%;
+        }
+        
+        .sandbox-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .sandbox-title {
+            font-size: 14px;
+            color: var(--color-text-1);
+            font-weight: 500;
+            margin-right: 8px;
+        }
+        
+        .sandbox-switch-container {
+            margin-bottom: 12px;
+        }
+        
+        .sandbox-switch-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px;
+        }
+        
+        .sandbox-select-container {
+            margin-bottom: 12px;
+        }
+        
+        /* 响应式设计 */
+        @media screen and (max-width: 768px) {
+            .sandbox-switch-wrapper {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .arco-form-item-label {
+                font-size: 13px;
+            }
+            
+            .tab-content-wrapper {
+                padding: 12px 0;
+            }
+        }
+        
+        /* 增强的表单项目样式 */
+        .arco-form-item {
+            margin-bottom: 16px;
+        }
+        
+        .arco-form-item-label {
+            font-weight: 500;
+            color: var(--color-text-1);
+            margin-bottom: 8px;
+        }
+        
+        /* 警告提示样式优化 */
+        .sandbox-warning {
+            font-size: 12px;
+            color: var(--color-warning-6);
+            background-color: var(--color-warning-light-1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 8px;
+            border-left: 3px solid var(--color-warning-6);
         }
     </style>
 </head>
@@ -56,7 +155,7 @@
                                     <a-form-item label="源地址 (URL)" field="src" :rules="[{ required: true }]">
                                         <a-input v-model="form.src" placeholder="https://example.com/page 或 video.mp4" @blur="handleSrcBlur" />
                                         <div v-if="isVideoUrl" style="margin-top: 8px; font-size: 12px; color: #165dff;">
-                                            <icon-video-camera /> 检测到视频链接，将自动使用内置播放器生成嵌入代码。
+                                            <icon-video-camera></icon-video-camera> 检测到视频链接，将自动使用内置播放器生成嵌入代码。
                                         </div>
                                     </a-form-item>
 
@@ -86,56 +185,166 @@
                                         </a-col>
                                     </a-row>
 
-                                    <a-collapse :default-active-key="['1']" style="margin-bottom: 24px;">
-                                        <a-collapse-item header="高级选项" key="1">
-                                            <a-row :gutter="16">
-                                                <a-col :span="12">
-                                                    <a-form-item label="显示边框" field="border">
-                                                        <a-switch v-model="form.border" />
-                                                    </a-form-item>
-                                                </a-col>
-                                                <a-col :span="12">
-                                                    <a-form-item field="allowFullscreen">
-                                                        <template #label>
-                                                            <a-space>
-                                                                允许全屏
-                                                                <a-tooltip content="包含 webkit/moz/ms 前缀以支持旧版浏览器">
-                                                                    <icon-info-circle />
-                                                                </a-tooltip>
-                                                            </a-space>
+                                    <a-collapse :default-active-key="['1']" style="margin-bottom: 24px; border: none; background: transparent;">
+                                        <a-collapse-item key="1" style="background: #fff; border: 1px solid #e5e6eb; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                                            <template #header>
+                                                <div style="display: flex; align-items: center;">
+                                                    高级选项
+                                                    <a-tooltip position="top">
+                                                        <template #content>
+                                                            更多功能查看 <a href="https://developer.mozilla.org/zh-CN/docs/Web/HTML/Reference/Elements/iframe" target="_blank" style="color: inherit; text-decoration: underline;">MDN 文档</a>
                                                         </template>
-                                                        <a-switch v-model="form.allowFullscreen" />
-                                                    </a-form-item>
-                                                </a-col>
-                                                <a-col :span="12">
-                                                    <a-form-item label="允许滚动条" field="scrolling">
-                                                        <a-switch v-model="form.scrolling" />
-                                                    </a-form-item>
-                                                </a-col>
-                                                <a-col :span="12">
-                                                    <a-form-item label="字体大小 (pt)" field="fontSize">
-                                                        <a-input-number v-model="form.fontSize" :min="8" :max="72" />
-                                                    </a-form-item>
-                                                </a-col>
-                                                <a-col :span="24">
-                                                    <a-form-item field="sandbox">
-                                                        <template #label>
-                                                            <a-space>
-                                                                启用沙箱 (Sandbox)
-                                                                <a-tooltip content="增加安全性，但可能限制部分功能">
-                                                                    <icon-info-circle />
-                                                                </a-tooltip>
-                                                            </a-space>
-                                                        </template>
-                                                        <a-switch v-model="form.sandbox" />
-                                                    </a-form-item>
-                                                </a-col>
-                                            </a-row>
+                                                        <a href="https://developer.mozilla.org/zh-CN/docs/Web/HTML/Reference/Elements/iframe" target="_blank" @click.stop style="color: var(--color-text-3); margin-left: 8px; display: flex; align-items: center;">
+                                                            <icon-info-circle></icon-info-circle>
+                                                        </a>
+                                                    </a-tooltip>
+                                                </div>
+                                            </template>
+                                            <div style="padding-top: 8px;">
+                                                <a-tabs default-active-key="1" type="rounded" size="medium" justify>
+                                                    <!-- Tab 1: 基础属性 -->
+                                                    <a-tab-pane key="1" title="基础属性">
+                                                        <div class="tab-content-wrapper">
+                                                            <a-row :gutter="20">
+                                                                <a-col :span="12">
+                                                                    <a-form-item field="name" label="名称 (Name)">
+                                                                        <template #label>
+                                                                            <a-space>名称 <a-tooltip content="嵌入浏览上下文的名称"><icon-info-circle></icon-info-circle></a-tooltip></a-space>
+                                                                        </template>
+                                                                        <a-input v-model="form.name" placeholder="iframe-name" allow-clear />
+                                                                    </a-form-item>
+                                                                </a-col>
+                                                                <a-col :span="12">
+                                                                    <a-form-item field="title" label="标题 (Title)">
+                                                                        <template #label>
+                                                                            <a-space>标题 <a-tooltip content="辅助技术使用的描述性标题"><icon-info-circle></icon-info-circle></a-tooltip></a-space>
+                                                                        </template>
+                                                                        <a-input v-model="form.title" placeholder="描述性标题" allow-clear />
+                                                                    </a-form-item>
+                                                                </a-col>
+                                                                <a-col :span="12">
+                                                                    <a-form-item field="loading">
+                                                                        <template #label>
+                                                                            <a-space>加载策略 <a-tooltip content="Lazy: 懒加载; Eager: 立即加载"><icon-info-circle></icon-info-circle></a-tooltip></a-space>
+                                                                        </template>
+                                                                        <a-select v-model="form.loading" :options="['eager', 'lazy']" />
+                                                                    </a-form-item>
+                                                                </a-col>
+                                                                <a-col :span="12">
+                                                                    <a-form-item field="referrerPolicy">
+                                                                        <template #label>
+                                                                            <a-space>Referrer <a-tooltip content="控制 Referrer 信息发送"><icon-info-circle></icon-info-circle></a-tooltip></a-space>
+                                                                        </template>
+                                                                        <a-select v-model="form.referrerPolicy" :options="['no-referrer', 'no-referrer-when-downgrade', 'origin', 'origin-when-cross-origin', 'same-origin', 'strict-origin', 'strict-origin-when-cross-origin', 'unsafe-url']" />
+                                                                    </a-form-item>
+                                                                </a-col>
+                                                            </a-row>
+                                                        </div>
+                                                    </a-tab-pane>
+
+                                                    <!-- Tab 2: 权限与安全 -->
+                                                    <a-tab-pane key="2" title="权限安全" class="permission-security-tab">
+                                                        <div class="tab-content-wrapper">
+                                                            <a-form-item field="allow">
+                                                                <template #label>
+                                                                    <a-space>功能权限 (Allow) <a-tooltip content="指定 iframe 拥有的功能权限"><icon-info-circle></icon-info-circle></a-tooltip></a-space>
+                                                                </template>
+                                                                <a-select v-model="form.allow" multiple allow-create placeholder="选择权限..." :max-tag-count="3" allow-clear>
+                                                                    <a-option>autoplay</a-option>
+                                                                    <a-option>camera</a-option>
+                                                                    <a-option>microphone</a-option>
+                                                                    <a-option>geolocation</a-option>
+                                                                    <a-option>fullscreen</a-option>
+                                                                    <a-option>payment</a-option>
+                                                                    <a-option>clipboard-read</a-option>
+                                                                    <a-option>clipboard-write</a-option>
+                                                                </a-select>
+                                                            </a-form-item>
+
+                                                            <div style="margin: 16px 0; height: 1px; background-color: #f2f3f5;"></div>
+
+                                                            <div class="sandbox-section">
+                                                                <div class="sandbox-header">
+                                                                    <span class="sandbox-title">
+                                                                        沙箱限制 (Sandbox)
+                                                                    </span>
+                                                                    <a-tooltip content="启用后将应用一系列安全限制，增强iframe的安全性">
+                                                                        <icon-info-circle style="color: var(--color-text-3); font-size: 14px;"></icon-info-circle>
+                                                                    </a-tooltip>
+                                                                </div>
+                                                                
+                                                                <div class="sandbox-switch-container">
+                                                                    <div class="sandbox-switch-wrapper">
+                                                                        <span style="font-size: 14px; color: var(--color-text-2);">启用 Sandbox 属性</span>
+                                                                        <a-switch v-model="form.enableSandbox" type="round" />
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                <div v-if="form.enableSandbox" class="sandbox-select-container">
+                                                                    <a-select 
+                                                                        v-model="form.sandboxOptions" 
+                                                                        multiple 
+                                                                        allow-clear 
+                                                                        placeholder="选择放行的权限 (留空则应用最严格限制)"
+                                                                        :scrollbar="true"
+                                                                        style="width: 100%;"
+                                                                    >
+                                                                        <a-option value="allow-forms">允许表单 (allow-forms)</a-option>
+                                                                        <a-option value="allow-scripts">允许脚本 (allow-scripts)</a-option>
+                                                                        <a-option value="allow-same-origin">允许同源 (allow-same-origin)</a-option>
+                                                                        <a-option value="allow-popups">允许弹窗 (allow-popups)</a-option>
+                                                                        <a-option value="allow-modals">允许模态 (allow-modals)</a-option>
+                                                                        <a-option value="allow-downloads">允许下载 (allow-downloads)</a-option>
+                                                                    </a-select>
+                                                                </div>
+                                                                
+                                                                <div v-if="form.enableSandbox && form.sandboxOptions.length === 0" class="sandbox-warning">
+                                                                    <icon-exclamation-circle style="margin-right: 4px;"></icon-exclamation-circle>
+                                                                    <span>警告：未选择任何权限时，iframe将处于最严格的沙箱环境中，可能导致某些功能无法正常使用</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </a-tab-pane>
+
+                                                    <!-- Tab 3: 外观样式 -->
+                                                    <a-tab-pane key="3" title="外观样式">
+                                                        <div class="tab-content-wrapper">
+                                                            <a-row :gutter="20">
+                                                                <a-col :span="8">
+                                                                    <a-form-item label="显示边框" field="border">
+                                                                        <a-switch v-model="form.border" type="round" />
+                                                                    </a-form-item>
+                                                                </a-col>
+                                                                <a-col :span="8">
+                                                                    <a-form-item label="允许全屏" field="allowFullscreen">
+                                                                        <a-switch v-model="form.allowFullscreen" type="round" />
+                                                                    </a-form-item>
+                                                                </a-col>
+                                                                <a-col :span="8">
+                                                                    <a-form-item label="允许滚动" field="scrolling">
+                                                                        <a-switch v-model="form.scrolling" type="round" />
+                                                                    </a-form-item>
+                                                                </a-col>
+                                                                <a-col :span="24">
+                                                                    <a-form-item field="fontSize">
+                                                                        <template #label>
+                                                                            <a-space>字体大小 <a-tooltip content="内联样式 font-size"><icon-info-circle></icon-info-circle></a-tooltip></a-space>
+                                                                        </template>
+                                                                        <a-input-number v-model="form.fontSize" :min="8" :max="72" mode="button">
+                                                                            <template #suffix>pt</template>
+                                                                        </a-input-number>
+                                                                    </a-form-item>
+                                                                </a-col>
+                                                            </a-row>
+                                                        </div>
+                                                    </a-tab-pane>
+                                                </a-tabs>
+                                            </div>
                                         </a-collapse-item>
                                     </a-collapse>
 
                                     <a-button type="primary" long @click="generateCode">
-                                        <template #icon><icon-code /></template>
+                                        <template #icon><icon-code></icon-code></template>
                                         生成代码
                                     </a-button>
                                 </a-form>
@@ -154,10 +363,10 @@
                                     ></a-textarea>
                                     <div style="margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px;">
                                         <a-button type="primary" status="success" @click="handlePreviewFromCode" :disabled="!code">
-                                            <template #icon><icon-play-circle /></template> 预览代码
+                                            <template #icon><icon-play-circle></icon-play-circle></template> 预览代码
                                         </a-button>
                                         <a-button type="secondary" @click="handleCopy" :disabled="!code">
-                                            <template #icon><icon-copy /></template> 复制到剪贴板
+                                            <template #icon><icon-copy></icon-copy></template> 复制到剪贴板
                                         </a-button>
                                     </div>
                                 </a-card>
@@ -165,12 +374,12 @@
                                 <a-card title="效果预览" :bordered="false">
                                     <div id="preview-box" class="preview-container">
                                         <div v-if="!previewConfig" style="text-align: center; color: #86909c;">
-                                            <icon-code style="font-size: 48px; margin-bottom: 16px;" />
+                                            <icon-code style="font-size: 48px; margin-bottom: 16px;"></icon-code>
                                             <p>生成后在此处查看预览</p>
                                         </div>
                                     </div>
                                     <div v-if="previewConfig" style="margin-top: 12px; font-size: 12px; color: #86909c;">
-                                        <icon-info-circle /> 注意：部分网站（如 Google, GitHub）设置了 X-Frame-Options 响应头，禁止被嵌入 Iframe 中。
+                                        <icon-info-circle></icon-info-circle> 注意：部分网站（如 Google, GitHub）设置了 X-Frame-Options 响应头，禁止被嵌入 Iframe 中。
                                     </div>
                                 </a-card>
                             </a-space>
@@ -197,8 +406,14 @@
                         border: false,
                         scrolling: true,
                         allowFullscreen: true,
-                        sandbox: false,
-                        fontSize: 12
+                        enableSandbox: false,
+                        sandboxOptions: [],
+                        fontSize: 12,
+                        name: '',
+                        title: '',
+                        loading: 'eager',
+                        referrerPolicy: 'no-referrer-when-downgrade',
+                        allow: []
                     },
                     code: '',
                     previewConfig: null,
@@ -248,18 +463,29 @@
                     attrs.push(`frameborder="${values.border ? 1 : 0}"`);
                     if (values.scrolling === false) attrs.push(`scrolling="no"`);
                     
+                    // Advanced Attributes
+                    if (values.name) attrs.push(`name="${values.name}"`);
+                    if (values.title) attrs.push(`title="${values.title}"`);
+                    if (values.loading && values.loading !== 'eager') attrs.push(`loading="${values.loading}"`);
+                    if (values.referrerPolicy && values.referrerPolicy !== 'no-referrer-when-downgrade') attrs.push(`referrerpolicy="${values.referrerPolicy}"`);
+                    
+                    // Allow (Feature Policy)
+                    if (values.allow && values.allow.length > 0) {
+                        attrs.push(`allow="${values.allow.join('; ')}"`);
+                    }
+
                     // Fullscreen support
                     if (values.allowFullscreen) {
                         attrs.push('allowfullscreen');
-                        attrs.push('webkitallowfullscreen');
-                        attrs.push('mozallowfullscreen');
-                        attrs.push('oallowfullscreen');
-                        attrs.push('msallowfullscreen');
                     }
 
                     // Sandbox
-                    if (values.sandbox) {
-                        attrs.push('sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-presentation"');
+                    if (values.enableSandbox) {
+                        if (values.sandboxOptions && values.sandboxOptions.length > 0) {
+                            attrs.push(`sandbox="${values.sandboxOptions.join(' ')}"`);
+                        } else {
+                            attrs.push('sandbox=""'); // Strictest
+                        }
                     }
 
                     // Styles
